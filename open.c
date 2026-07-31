@@ -39,7 +39,7 @@ int open_write(const char *fn) {
 #else
     int fd = open(fn, O_CREAT | O_WRONLY | O_NONBLOCK, 0644);
     if (fd == -1) return -1;
-    fcntl(fd, F_SETFD, 1);
+    fcntl(fd, F_SETFD, FD_CLOEXEC);
     return fd;
 #endif
 }
