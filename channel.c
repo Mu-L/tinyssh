@@ -218,12 +218,17 @@ client to childs buffer.
 void channel_put(unsigned char *buf, long long len) {
 
     if (channel.maxpacket == 0) bug_proto();
-    if (channel.pid <= 0) bug_proto();
-    if (channel.fd0 == -1) bug_proto();
+    if (channel.pid == 0) bug_proto();
 
     if (!buf || len < 0) bug_inval();
-    if (channel.len0 + len > CHANNEL_BUFSIZE) bug_nomem();
     if ((crypto_uint32) len > channel.localwindow) bug_proto();
+
+    /* the child is gone or its standard input is already closed: discard
+       the data instead of tearing down the whole connection, the channel
+       still has to deliver the child's output and the exit-status */
+    if (channel.pid < 0 || channel.fd0 == -1) return;
+
+    if (channel.len0 + len > CHANNEL_BUFSIZE) bug_nomem();
 
     byte_copy(channel.buf0 + channel.len0, len, buf);
     channel.len0 += len;
@@ -238,9 +243,9 @@ void channel_puteof(void) {
 
     if (channel.maxpacket == 0) bug_proto();
     if (channel.pid == 0) bug_proto();
-    if (channel.fd0 == -1) bug_proto();
 
     channel.remoteeof = 1;
+    if (channel.fd0 == -1) return;
     if (channel.len0 == 0 && !channel.flagterminal) {
         close(channel.fd0);
         channel.fd0 = -1;
