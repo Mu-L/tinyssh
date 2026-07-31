@@ -56,7 +56,6 @@ extern long long channel_forkpty(int[3], int, int);
 extern int channel_openpty(int *, int *);
 
 /* channel.c */
-extern void channel_purge(void);
 extern int channel_open(const char *, crypto_uint32, crypto_uint32,
                         crypto_uint32, crypto_uint32 *);
 extern int channel_openterminal(const char *, crypto_uint32, crypto_uint32,
