@@ -200,12 +200,13 @@ static const unsigned char b64chars[] =
 int buf_putbase64_(const char *fn, unsigned long long line, struct buf *b,
                    const unsigned char *x, long long len) {
 
-    long long i;
+    long long i, start;
     unsigned long long bits = 0, v = 0;
     unsigned char ch;
 
     if (len < 0 || len > 1073741824 || !b || !x) bug_inval_(fn, line);
 
+    start = b->len;
     for (i = 0; i < len; ++i) {
         v <<= 8;
         v += x[i];
@@ -222,6 +223,6 @@ int buf_putbase64_(const char *fn, unsigned long long line, struct buf *b,
         ch = b64chars[v & 63];
         buf_putnum8_(fn, line, b, ch);
     }
-    while (b->len & 3) { buf_putnum8_(fn, line, b, '='); }
+    while ((b->len - start) & 3) { buf_putnum8_(fn, line, b, '='); }
     return 1;
 }
