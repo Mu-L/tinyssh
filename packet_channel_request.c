@@ -204,15 +204,15 @@ int packet_channel_request(struct buf *b1, struct buf *b2,
         pos = packetparser_skip(b1->buf, b1->len, pos, plen2);
         pos = packetparser_end(b1->buf, b1->len, pos);
         buf_putnum8(b1, 0);
+        /* XXX TODO encoded terminal modes (p2, plen2) */
+        p1[plen1] = 0;
+        p2[plen2] = 0;
         if (channel.pid != 0 || channel.flagterminal) {
             log_d3("packet=SSH_MSG_CHANNEL_REQUEST, pty-req ", p1,
                    ", rejected: terminal already initialized");
             goto reject;
         }
 
-        /* XXX TODO encoded terminal modes (p2, plen2) */
-        p1[plen1] = 0;
-        p2[plen2] = 0;
         if (!channel_openterminal(p1, a, b, x, y)) {
             log_w1("unable to open terminal");
             log_d3("packet=SSH_MSG_CHANNEL_REQUEST, pty-req ", p1,
