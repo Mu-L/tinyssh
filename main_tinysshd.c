@@ -334,7 +334,10 @@ rekeying:
 
         if (watchselfpipe) {
             char ch;
-            while (read(selfpipe[0], &ch, 1) != 1) {}
+            long long r;
+            do {
+                r = read(selfpipe[0], &ch, 1);
+            } while (r == -1 && errno == EINTR);
         }
 
         if (watchtochild) {
