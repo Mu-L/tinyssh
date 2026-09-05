@@ -386,7 +386,7 @@ rekeying:
         for (;;) {
 
             if (!packet_get(&b1, 0)) {
-                if (!errno) break;
+                if (!errno) goto finished;
                 die_fatal("unable to get packets from network", 0, 0);
             }
             if (b1.len < 1) break; /* XXX */
@@ -433,6 +433,7 @@ rekeying:
         }
     }
 
+finished:
     log_i1("finished");
     global_die(0);
     return 111;
