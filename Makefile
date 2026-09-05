@@ -11,8 +11,8 @@ INSTALL?=install
 LINKS=tinysshd-makekey tinysshd-printkey tinysshnoneauthd
 
 BINARIES=_tinysshd-printkex _tinysshd-speed _tinysshd-test-hello1 \
- _tinysshd-test-hello2 _tinysshd-test-kex1 _tinysshd-test-kex2 \
- _tinysshd-unauthenticated tinysshd
+ _tinysshd-test-hello2 _tinysshd-test-ignore _tinysshd-test-kex1 \
+ _tinysshd-test-kex2 _tinysshd-unauthenticated tinysshd
 
 TESTCRYPTOBINARIES=test-crypto
 
@@ -40,10 +40,10 @@ OBJLIB=blocking.o buf.o byte.o channel.o channel_drop.o channel_fork.o \
  writeall.o
 
 OBJALL=_tinysshd-printkex.o _tinysshd-speed.o _tinysshd-test-hello1.o \
- _tinysshd-test-hello2.o _tinysshd-test-kex1.o _tinysshd-test-kex2.o \
- _tinysshd-unauthenticated.o blocking.o buf.o byte.o channel.o channel_drop.o \
- channel_fork.o channel_forkpty.o channel_subsystem.o cleanup.o coe.o \
- connectioninfo.o crypto_dh_x25519.o crypto_hash_sha256.o \
+ _tinysshd-test-hello2.o _tinysshd-test-ignore.o _tinysshd-test-kex1.o \
+ _tinysshd-test-kex2.o _tinysshd-unauthenticated.o blocking.o buf.o byte.o \
+ channel.o channel_drop.o channel_fork.o channel_forkpty.o channel_subsystem.o \
+ cleanup.o coe.o connectioninfo.o crypto_dh_x25519.o crypto_hash_sha256.o \
  crypto_hash_sha512_lib25519.o crypto_hash_sha512_tinyssh.o \
  crypto_kem_sntrup761_libntruprime.o crypto_kem_sntrup761_tinyssh.o \
  crypto_kem_sntrup761x25519.o crypto_onetimeauth_poly1305_lib1305.o \
@@ -74,8 +74,8 @@ AUTOHEADERS=haslib1305.h haslib25519.h haslibntruprime.h haslibrandombytes.h \
 
 TESTOUT=test-crypto-dh.out test-crypto-hash.out test-crypto-kem.out \
  test-crypto-onetimeauth.out test-crypto-sign.out test-crypto-sort.out \
- test-crypto-verify.out test-tinysshd-makekey.out test-tinysshd-printkey.out \
- test-tinysshd.out test-tinysshnoneauthd.out
+ test-crypto-verify.out test-tinysshd-ignore.out test-tinysshd-makekey.out \
+ test-tinysshd-printkey.out test-tinysshd.out test-tinysshnoneauthd.out
 
 all: $(AUTOHEADERS) $(BINARIES) $(LINKS)
 
@@ -122,6 +122,20 @@ _tinysshd-test-hello2.o: _tinysshd-test-hello2.c log.h packet.h buf.h \
  crypto_sort_uint32.h crypto_stream_chacha20.h limit.h haslimits.h \
  channel.h iptostr.h porttostr.h global.h str.h writeall.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c _tinysshd-test-hello2.c
+
+_tinysshd-test-ignore.o: _tinysshd-test-ignore.c buf.h \
+ cryptoint/crypto_uint8.h cryptoint/crypto_uint32.h global.h packet.h \
+ sshcrypto.h crypto.h cryptoint/crypto_int16.h cryptoint/crypto_int32.h \
+ cryptoint/crypto_int64.h cryptoint/crypto_int8.h \
+ cryptoint/crypto_uint16.h cryptoint/crypto_uint64.h crypto_verify_16.h \
+ crypto_verify_32.h haslibrandombytes.h randombytes.h \
+ crypto_hash_sha256.h crypto_hash_sha512.h haslib25519.h \
+ crypto_kem_sntrup761.h haslibntruprime.h crypto_kem_sntrup761x25519.h \
+ crypto_onetimeauth_poly1305.h haslib1305.h \
+ crypto_scalarmult_curve25519.h crypto_dh_x25519.h crypto_sign_ed25519.h \
+ crypto_sort_uint32.h crypto_stream_chacha20.h limit.h haslimits.h \
+ channel.h iptostr.h porttostr.h ssh.h str.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c _tinysshd-test-ignore.c
 
 _tinysshd-test-kex1.o: _tinysshd-test-kex1.c log.h packet.h buf.h \
  cryptoint/crypto_uint8.h cryptoint/crypto_uint32.h sshcrypto.h crypto.h \
@@ -842,6 +856,10 @@ _tinysshd-test-hello2: _tinysshd-test-hello2.o $(OBJLIB) randombytes.o libs
 	$(CC) $(CFLAGS) $(CPPFLAGS) -o _tinysshd-test-hello2 _tinysshd-test-hello2.o \
 	$(OBJLIB) $(LDFLAGS) `cat libs` randombytes.o
 
+_tinysshd-test-ignore: _tinysshd-test-ignore.o $(OBJLIB) randombytes.o libs
+	$(CC) $(CFLAGS) $(CPPFLAGS) -o _tinysshd-test-ignore _tinysshd-test-ignore.o \
+	$(OBJLIB) $(LDFLAGS) `cat libs` randombytes.o
+
 _tinysshd-test-kex1: _tinysshd-test-kex1.o $(OBJLIB) randombytes.o libs
 	$(CC) $(CFLAGS) $(CPPFLAGS) -o _tinysshd-test-kex1 _tinysshd-test-kex1.o \
 	$(OBJLIB) $(LDFLAGS) `cat libs` randombytes.o
@@ -1014,6 +1032,9 @@ test-crypto-sort.out: $(BINARIES) $(TESTCRYPTOBINARIES) $(LINKS) runtest.sh test
 
 test-crypto-verify.out: $(BINARIES) $(TESTCRYPTOBINARIES) $(LINKS) runtest.sh test-crypto-verify.sh test-crypto-verify.exp
 	sh runtest.sh test-crypto-verify.sh test-crypto-verify.out test-crypto-verify.exp
+
+test-tinysshd-ignore.out: $(BINARIES) $(TESTCRYPTOBINARIES) $(LINKS) runtest.sh test-tinysshd-ignore.sh test-tinysshd-ignore.exp
+	sh runtest.sh test-tinysshd-ignore.sh test-tinysshd-ignore.out test-tinysshd-ignore.exp
 
 test-tinysshd-makekey.out: $(BINARIES) $(TESTCRYPTOBINARIES) $(LINKS) runtest.sh test-tinysshd-makekey.sh test-tinysshd-makekey.exp
 	sh runtest.sh test-tinysshd-makekey.sh test-tinysshd-makekey.out test-tinysshd-makekey.exp

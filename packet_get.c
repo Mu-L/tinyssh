@@ -98,9 +98,10 @@ int packet_get(struct buf *b, crypto_uint8 x) {
                 return 0;
             case SSH_MSG_IGNORE:
             case SSH_MSG_DEBUG:
-                if (!packet.flagkeys) {
-                    log_f1("SSH_MSG_IGNORE/SSH_MSG_DEBUG packet rejected in "
-                           "plain-text mode");
+                if (!packet.flagkeys &&
+                    (sshcrypto_kex_flags & sshcrypto_FLAGSTRICTKEX)) {
+                    log_f1("strict KEX mode: rejecting "
+                           "SSH_MSG_IGNORE/SSH_MSG_DEBUG packet");
                     global_die(111);
                 }
                 flagpacketignored = 1;

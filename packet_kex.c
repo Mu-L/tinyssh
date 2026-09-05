@@ -9,6 +9,7 @@ Public domain.
 #include "sshcrypto.h"
 #include "packetparser.h"
 #include "bug.h"
+#include "log.h"
 #include "packet.h"
 
 int packet_kex_send(void) {
@@ -55,6 +56,11 @@ int packet_kex_receive(void) {
     pos = packetparser_skip(b->buf, b->len, pos, len);
     if (!sshcrypto_kex_select(b->buf + pos - len, len, &packet.kex_guess))
         return 0;
+    if (sshcrypto_kex_flags & sshcrypto_FLAGSTRICTKEX)
+        if (packet.receivepacketid != 1) {
+            log_f1("strict KEX mode: SSH_MSG_KEXINIT was not the first packet");
+            return 0;
+        }
 
     pos = packetparser_uint32(b->buf, b->len, pos,
                               &len); /* server host key algorithms */
