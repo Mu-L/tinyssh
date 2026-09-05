@@ -129,6 +129,11 @@ export LANG
     done
 
     echo "test: \$(TESTOUT)"
+    echo "	\$(MAKE) -C tests test"
+    echo
+
+    echo "test-ssh:"
+    echo "	\$(MAKE) -C tests test"
     echo
 
     echo "libs: trylibs.sh"
@@ -165,6 +170,7 @@ export LANG
     echo
 
     echo "clean:"
+    echo "	\$(MAKE) -C tests clean"
     echo "	rm -f *.log libs \$(OBJLIB) \$(OBJALL) \$(BINARIES) \$(TESTCRYPTOBINARIES) \$(LINKS) \$(AUTOHEADERS) \$(TESTOUT)"
     echo 
 
