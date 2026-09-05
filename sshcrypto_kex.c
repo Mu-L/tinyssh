@@ -109,7 +109,14 @@ int sshcrypto_kex_select(const unsigned char *buf, long long len,
     const unsigned char *x;
     long long xlen;
 
-    if (sshcrypto_kex_name) return 1;
+    sshcrypto_kex_name = 0;
+    sshcrypto_enc = 0;
+    sshcrypto_kem_publickeybytes = 0;
+    sshcrypto_kem_ciphertextbytes = 0;
+    sshcrypto_kem_bytes = 0;
+    sshcrypto_hash = 0;
+    sshcrypto_hash_bytes = 0;
+    sshcrypto_buf_putkemkey = 0;
 
     if (buf[len] != 0) bug_proto();
     log_d2("kex: client: kex algorithms: ", (const char *) buf);

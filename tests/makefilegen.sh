@@ -5,8 +5,8 @@ cd "$(dirname "$0")" || exit 111
 LANG=C
 export LANG
 
-programs='_tinysshd-printkex _tinysshd-test-auth-protocol _tinysshd-test-channel-flow _tinysshd-test-channel-protocol _tinysshd-test-global-request _tinysshd-test-hello1 _tinysshd-test-hello2 _tinysshd-test-ignore _tinysshd-test-kex-protocol _tinysshd-test-kex1 _tinysshd-test-kex2 _tinysshd-test-packet _tinysshd-test-sequence _tinysshd-unauthenticated tinysshd'
-links='tinysshd-makekey tinysshnoneauthd'
+programs='_tinysshd-printkex _tinysshd-test-auth-protocol _tinysshd-test-channel-flow _tinysshd-test-channel-protocol _tinysshd-test-global-request _tinysshd-test-hello1 _tinysshd-test-hello2 _tinysshd-test-ignore _tinysshd-test-kex-protocol _tinysshd-test-kex1 _tinysshd-test-kex2 _tinysshd-test-packet _tinysshd-test-rekey-protocol _tinysshd-test-sequence _tinysshd-unauthenticated tinysshd'
+links='tinysshd-makekey'
 autoheaders=''
 objects=''
 allobjects=''
@@ -29,6 +29,7 @@ for file in *.c; do
         _tinysshd-test-ignore.c | _tinysshd-test-kex-protocol.c | \
         _tinysshd-test-kex1.c | \
         _tinysshd-test-kex2.c | _tinysshd-test-packet.c | \
+        _tinysshd-test-rekey-protocol.c | \
         _tinysshd-test-sequence.c | \
         _tinysshd-unauthenticated.c | tinysshd.c)
             ;;
@@ -104,10 +105,6 @@ done
     echo 'tinysshd-makekey: tinysshd'
     echo '\trm -f tinysshd-makekey'
     echo '\tln -s tinysshd tinysshd-makekey'
-    echo
-    echo 'tinysshnoneauthd: tinysshd'
-    echo '\trm -f tinysshnoneauthd'
-    echo '\tln -s tinysshd tinysshnoneauthd'
     echo
     echo 'clean:'
     echo '\trm -f *.log *.o *.out libs $(PROGRAMS) $(LINKS) $(AUTOHEADERS)'

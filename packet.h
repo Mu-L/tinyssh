@@ -97,6 +97,7 @@ extern int packet_hello_receive(void);
 /* packet_kex.c */
 extern int packet_kex_send(void);
 extern int packet_kex_receive(void);
+extern int packet_kex_receive_rekey(struct buf *);
 
 /* packet_kexdh.c */
 extern int packet_kexdh(const char *, struct buf *, struct buf *);

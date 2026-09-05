@@ -98,7 +98,15 @@ int sshcrypto_key_select(const unsigned char *buf, long long len) {
     const unsigned char *x;
     long long xlen;
 
-    if (sshcrypto_key_name) return 1;
+    sshcrypto_key_name = 0;
+    sshcrypto_sign = 0;
+    sshcrypto_sign_publickey = 0;
+    sshcrypto_sign_publickeybytes = 0;
+    sshcrypto_sign_secretkeybytes = 0;
+    sshcrypto_sign_bytes = 0;
+    sshcrypto_sign_secretkeyfilename = 0;
+    sshcrypto_buf_putsignature = 0;
+    sshcrypto_buf_putsignpk = 0;
 
     if (buf[len] != 0) bug_proto();
     log_d2("kex: client: key algorithms: ", (const char *) buf);

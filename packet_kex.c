@@ -53,14 +53,12 @@ int packet_kex_send(void) {
     return packet_sendall();
 }
 
-int packet_kex_receive(void) {
+static int packet_kex_parse(int initial) {
 
     struct buf *b = &packet.kexrecv;
     long long pos = 0;
     crypto_uint8 ch;
     crypto_uint32 len;
-
-    if (!packet_getall(b, SSH_MSG_KEXINIT)) return 0;
 
     /* parse packet */
     pos = packetparser_uint8(b->buf, b->len, pos, &ch); /* SSH_MSG_KEXINIT */
@@ -72,7 +70,7 @@ int packet_kex_receive(void) {
     pos = packetparser_skip(b->buf, b->len, pos, len);
     if (!sshcrypto_kex_select(b->buf + pos - len, len, &packet.kex_guess))
         return 0;
-    if (sshcrypto_kex_flags & sshcrypto_FLAGSTRICTKEX)
+    if (initial && sshcrypto_kex_flags & sshcrypto_FLAGSTRICTKEX)
         if (packet.receivepacketid != 1) {
             log_f1("strict KEX mode: SSH_MSG_KEXINIT was not the first packet");
             return 0;
@@ -137,4 +135,18 @@ int packet_kex_receive(void) {
     pos = packetparser_end(b->buf, b->len, pos);
 
     return 1;
+}
+
+int packet_kex_receive(void) {
+
+    if (!packet_getall(&packet.kexrecv, SSH_MSG_KEXINIT)) return 0;
+    return packet_kex_parse(1);
+}
+
+int packet_kex_receive_rekey(struct buf *b) {
+
+    if (!b || b == &packet.kexrecv) bug_inval();
+    buf_purge(&packet.kexrecv);
+    buf_put(&packet.kexrecv, b->buf, b->len);
+    return packet_kex_parse(0);
 }

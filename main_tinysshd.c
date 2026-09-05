@@ -235,8 +235,8 @@ rekeying:
     /* rekeying */
     alarm(60);
     if (packet.flagrekeying == 1) {
-        buf_purge(&packet.kexrecv);
-        buf_put(&packet.kexrecv, b1.buf, b1.len);
+        if (!packet_kex_receive_rekey(&b1))
+            die_fatal("unable to receive rekey-message", 0, 0);
         if (!packet_kex_send()) die_fatal("unable to send kex-message", 0, 0);
     }
 
@@ -264,8 +264,7 @@ rekeying:
         if (channel_iseof())
             if (!packet.sendbuf.len)
                 if (packet.flagchanneleofreceived)
-                    if (packet.flagclosesent)
-                        break;
+                    if (packet.flagclosesent) break;
 
         watch0 = watch1 = 0;
         watchtochild = watchfromchild1 = watchfromchild2 = 0;

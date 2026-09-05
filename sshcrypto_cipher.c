@@ -60,7 +60,14 @@ int sshcrypto_cipher_select(const unsigned char *buf, long long len) {
     const unsigned char *x;
     long long xlen;
 
-    if (sshcrypto_cipher_name) return 1;
+    sshcrypto_cipher_name = 0;
+    sshcrypto_stream_xor = 0;
+    sshcrypto_auth = 0;
+    sshcrypto_stream_keybytes = 0;
+    sshcrypto_cipher_blockbytes = 0;
+    sshcrypto_auth_bytes = 0;
+    sshcrypto_packet_get = 0;
+    sshcrypto_packet_put = 0;
 
     if (buf[len] != 0) bug_proto();
     log_d2("kex: client: cipher algorithms: ", (const char *) buf);
