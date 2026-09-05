@@ -34,7 +34,24 @@ int packet_channel_recv_data(struct buf *b) {
 
 int packet_channel_recv_extendeddata(struct buf *b) {
 
-    /* ignore extended data */
+    long long pos = 0;
+    crypto_uint32 type, len, id;
+    crypto_uint8 ch;
+
+    pos = packetparser_uint8(b->buf, b->len, pos,
+                             &ch); /* byte SSH_MSG_CHANNEL_EXTENDED_DATA */
+    if (ch != SSH_MSG_CHANNEL_EXTENDED_DATA) bug_proto();
+    pos = packetparser_uint32(b->buf, b->len, pos,
+                              &id); /* uint32 recipient channel */
+    if (id != channel_getid()) bug_proto();
+    pos = packetparser_uint32(b->buf, b->len, pos,
+                              &type); /* uint32 data type code */
+    pos = packetparser_uint32(b->buf, b->len, pos, &len); /* string data */
+    pos = packetparser_skip(b->buf, b->len, pos, len);
+    pos = packetparser_end(b->buf, b->len, pos);
+
+    (void) type;
+    channel_putextended(len);
     buf_purge(b);
     return 1;
 }
@@ -96,6 +113,13 @@ int packet_channel_recv_close(struct buf *b) {
 
     log_d1("packet=SSH_MSG_CHANNEL_CLOSE received");
     packet_channel_send_eof(b);
+    if (!packet.flagclosesent) {
+        buf_purge(b);
+        buf_putnum8(b, SSH_MSG_CHANNEL_CLOSE);
+        buf_putnum32(b, channel_getid());
+        packet_put(b);
+        packet.flagclosesent = 1;
+    }
     packet.flagchanneleofreceived = 1;
     buf_purge(b);
     return 1;

@@ -245,6 +245,15 @@ void channel_put(unsigned char *buf, long long len) {
     channel.localwindow -= len;
 }
 
+/* Account for extended data which this server intentionally discards. */
+void channel_putextended(long long len) {
+
+    if (channel.maxpacket == 0) bug_proto();
+    if (channel.pid == 0) bug_proto();
+    if (len < 0 || (crypto_uint32) len > channel.localwindow) bug_proto();
+    channel.localwindow -= len;
+}
+
 /*
 The 'channel_puteof' function adds information
 that remote side closed standard output.
@@ -252,9 +261,8 @@ that remote side closed standard output.
 void channel_puteof(void) {
 
     if (channel.maxpacket == 0) bug_proto();
-    if (channel.pid == 0) bug_proto();
-
     channel.remoteeof = 1;
+    if (channel.pid == 0) return;
     if (channel.fd0 == -1) return;
     if (channel.len0 == 0 && !channel.flagterminal) {
         close(channel.fd0);
