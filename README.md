@@ -12,7 +12,7 @@ As of version 20260601, TinySSH supports the following SSHv2 algorithms:
 
 | OpenSSH option | Algorithms |
 | --- | --- |
-| KexAlgorithms | `curve25519-sha256`, `curve25519-sha256@libssh.org`, `sntrup761x25519-sha512@openssh.com` |
+| KexAlgorithms | `curve25519-sha256`, `curve25519-sha256@libssh.org`, `sntrup761x25519-sha512@openssh.com`, `sntrup761x25519-sha512` |
 | Ciphers | `chacha20-poly1305@openssh.com` |
 | MACs | `hmac-sha2-256` (advertised for protocol compatibility; authentication is provided by the `chacha20-poly1305@openssh.com` AEAD cipher) |
 | HostKeyAlgorithms | `ssh-ed25519` |
