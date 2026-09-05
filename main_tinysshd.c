@@ -392,6 +392,10 @@ rekeying:
             if (b1.len < 1) break; /* XXX */
 
             switch (b1.buf[0]) {
+                case SSH_MSG_GLOBAL_REQUEST:
+                    if (!packet_global_request(&b1))
+                        die_fatal("unable to handle global-request", 0, 0);
+                    break;
                 case SSH_MSG_CHANNEL_OPEN:
                     if (!packet_channel_open(&b1, &b2))
                         die_fatal("unable to open channel", 0, 0);

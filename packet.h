@@ -124,6 +124,9 @@ extern int packet_channel_send_windowadjust(struct buf *);
 extern void packet_channel_send_eof(struct buf *);
 extern int packet_channel_send_close(struct buf *, int, int);
 
+/* packet_global_request.c */
+extern int packet_global_request(struct buf *);
+
 /* packet_unimplemented.c */
 extern int packet_unimplemented(struct buf *);
 
