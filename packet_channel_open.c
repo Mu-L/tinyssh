@@ -14,10 +14,11 @@ Public domain.
 
 int packet_channel_open(struct buf *b1, struct buf *b2) {
 
-    crypto_uint32 id, remotewindow, localwindow, maxpacket, chanlen;
+    crypto_uint32 id, remotewindow, localwindow, maxpacket, chanlen, reason;
     long long pos = 0;
     crypto_uint8 ch;
     char *chan = (char *) b1->buf + pos;
+    const char *description;
 
     /* parse packet */
     pos = packetparser_uint8(b1->buf, b1->len, pos,
@@ -38,7 +39,12 @@ int packet_channel_open(struct buf *b1, struct buf *b2) {
     if (maxpacket > PACKET_LIMIT) maxpacket = PACKET_LIMIT;
     if (maxpacket < 32) maxpacket = 32;
 
+    reason = SSH_OPEN_UNKNOWN_CHANNEL_TYPE;
+    description = "unknown channel type";
     if (str_equaln(chan, chanlen, "session")) {
+
+        reason = SSH_OPEN_ADMINISTRATIVELY_PROHIBITED;
+        description = "only one 'session' channel allowed";
 
         /*    byte      SSH_MSG_CHANNEL_OPEN
               string    "session"
@@ -81,13 +87,10 @@ int packet_channel_open(struct buf *b1, struct buf *b2) {
         b2, SSH_MSG_CHANNEL_OPEN_FAILURE); /* byte SSH_MSG_CHANNEL_OPEN_FAILURE
                                             */
     buf_putnum32(b2, id);                  /* uint32    recipient channel */
-    buf_putnum32(
-        b2, SSH_OPEN_ADMINISTRATIVELY_PROHIBITED); /* uint32    reason code */
-    buf_putstring(
-        b2, "only one 'session' channel allowed"); /* string    description in
-                                                      ISO-10646 UTF-8 encoding
-                                                      [RFC3629] */
-    buf_putstring(b2, ""); /* string    language tag [RFC3066] */
+    buf_putnum32(b2, reason);              /* uint32    reason code */
+    buf_putstring(b2, description); /* string    description in ISO-10646 UTF-8
+                                       encoding [RFC3629] */
+    buf_putstring(b2, "");          /* string    language tag [RFC3066] */
     packet_put(b2);
     buf_purge(b1);
     buf_purge(b2);
