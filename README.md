@@ -6,10 +6,20 @@
 * tinysshd doesn't have features such: SSH1 protocol, compression, port forwarding, agent forwarding, X11 forwarding ...
 * tinysshd doesn't use dynamic memory allocation (no allocation failures, etc.)
 
-### Crypto primitives ###
-* State-of-the-art crypto: ssh-ed25519, curve25519-sha256, chacha20-poly1305@openssh.com
-* Older standard: <strike>ecdsa-sha2-nistp256, ecdh-sha2-nistp256, aes256-ctr, hmac-sha2-256</strike> removed in version 20190101
-* Postquantum crypto: sntrup761x25519-sha512@openssh.com, chacha20-poly1305@openssh.com
+### Supported SSH algorithms ###
+
+As of version 20260601, TinySSH supports the following SSHv2 algorithms:
+
+| OpenSSH option | Algorithms |
+| --- | --- |
+| KexAlgorithms | `curve25519-sha256`, `curve25519-sha256@libssh.org`, `sntrup761x25519-sha512@openssh.com` |
+| Ciphers | `chacha20-poly1305@openssh.com` |
+| MACs | `hmac-sha2-256` (advertised for protocol compatibility; authentication is provided by the `chacha20-poly1305@openssh.com` AEAD cipher) |
+| HostKeyAlgorithms | `ssh-ed25519` |
+
+TinySSH also supports the OpenSSH strict key-exchange extension `kex-strict-s-v00@openssh.com`.
+
+The `curve25519-sha256` algorithms can be disabled with `-S`. The post-quantum `sntrup761x25519-sha512@openssh.com` algorithm can be disabled with `-P`.
 
 ### Project timeline ###
 * <strike>experimental: 2014.01.01 - 2014.12.31 (experimentation)</strike>
