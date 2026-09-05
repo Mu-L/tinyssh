@@ -14,6 +14,14 @@ Public domain.
 #include "packet.h"
 #include "channel.h"
 
+static int stringhaszero(const char *s, crypto_uint32 len) {
+    crypto_uint32 i;
+
+    for (i = 0; i < len; ++i)
+        if (!s[i]) return 1;
+    return 0;
+}
+
 int packet_channel_request(struct buf *b1, struct buf *b2,
                            const char *customcmd) {
 
@@ -54,6 +62,7 @@ int packet_channel_request(struct buf *b1, struct buf *b2,
         pos = packetparser_skip(b1->buf, b1->len, pos, plen1);
         pos = packetparser_end(b1->buf, b1->len, pos);
         buf_putnum8(b1, 0);
+        if (stringhaszero(p1, plen1)) goto reject;
         p1[plen1] = 0;
 
         if (channel.pid != 0) {
@@ -87,6 +96,7 @@ int packet_channel_request(struct buf *b1, struct buf *b2,
         pos = packetparser_skip(b1->buf, b1->len, pos, plen1);
         pos = packetparser_end(b1->buf, b1->len, pos);
         buf_putnum8(b1, 0);
+        if (stringhaszero(p1, plen1)) goto reject;
         p1[plen1] = 0;
 
         if (channel.pid != 0) {
@@ -127,7 +137,8 @@ int packet_channel_request(struct buf *b1, struct buf *b2,
         pos = packetparser_end(b1->buf, b1->len, pos);
 
         if (channel.pid != 0) {
-            log_d1("packet=SSH_MSG_CHANNEL_REQUEST, shell, rejected: session already started");
+            log_d1("packet=SSH_MSG_CHANNEL_REQUEST, shell, rejected: session "
+                   "already started");
             goto reject;
         }
 
@@ -164,6 +175,7 @@ int packet_channel_request(struct buf *b1, struct buf *b2,
         pos = packetparser_skip(b1->buf, b1->len, pos, plen2);
         pos = packetparser_end(b1->buf, b1->len, pos);
         buf_putnum8(b1, 0);
+        if (stringhaszero(p1, plen1) || stringhaszero(p2, plen2)) goto reject;
         p1[plen1] = 0;
         p2[plen2] = 0;
 
@@ -205,6 +217,7 @@ int packet_channel_request(struct buf *b1, struct buf *b2,
         pos = packetparser_end(b1->buf, b1->len, pos);
         buf_putnum8(b1, 0);
         /* XXX TODO encoded terminal modes (p2, plen2) */
+        if (stringhaszero(p1, plen1)) goto reject;
         p1[plen1] = 0;
         p2[plen2] = 0;
         if (channel.pid != 0 || channel.flagterminal) {
@@ -241,7 +254,8 @@ int packet_channel_request(struct buf *b1, struct buf *b2,
         pos = packetparser_end(b1->buf, b1->len, pos);
 
         if (channel.pid <= 0 || !channel.flagterminal) {
-            log_d1("packet=SSH_MSG_CHANNEL_REQUEST, window-change, rejected: no active terminal");
+            log_d1("packet=SSH_MSG_CHANNEL_REQUEST, window-change, rejected: "
+                   "no active terminal");
             goto reject;
         }
 
