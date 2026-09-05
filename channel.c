@@ -107,22 +107,23 @@ sets environment variable TERM and initial terminal windowsize.
 int channel_openterminal(const char *name, crypto_uint32 a, crypto_uint32 b,
                          crypto_uint32 x, crypto_uint32 y) {
 
+    int master = -1, slave = -1, saved_errno;
 
     if (channel.maxpacket == 0) bug_proto();
     if (channel.pid != 0) bug_proto();
     if (channel.flagterminal == 1) bug_proto();
 
-    if (!channel_openpty(&channel.master, &channel.slave)) return 0;
+    if (!channel_openpty(&master, &slave)) return 0;
     if (!newenv_env("TERM", name)) {
-        int saved_errno = errno;
-        close(channel.master);
-        close(channel.slave);
-        channel.master = -1;
-        channel.slave = -1;
+        saved_errno = errno;
+        close(master);
+        close(slave);
         errno = saved_errno;
         return 0;
     }
 
+    channel.master = master;
+    channel.slave = slave;
     channel.flagterminal = 1;
     channel.a = a;
     channel.b = b;
