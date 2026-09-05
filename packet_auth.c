@@ -81,17 +81,18 @@ int packet_auth(struct buf *b, struct buf *b2, int flagnoneauth) {
 
         if (str_equaln((char *) b->buf + pos - len, len, "none")) {
             /*
-            if auth. none is enabled get the user from UID
+            if auth. none is enabled verify the user against the process UID
             */
             if (flagnoneauth) {
                 struct passwd *pw;
                 pkname = "none";
-                pw = getpwuid(geteuid());
-                if (!pw) bug();
-                str_copyn(packet.name, sizeof packet.name, pw->pw_name);
-                b->len = 0;
-                b->buf[0] = 0;
-                goto authorized;
+                pos = packetparser_end(b->buf, b->len, pos);
+                pw = getpwnam(packet.name);
+                if (pw && pw->pw_uid == geteuid()) {
+                    b->len = 0;
+                    b->buf[0] = 0;
+                    goto authorized;
+                }
             }
         }
         if (str_equaln((char *) b->buf + pos - len, len, "password"))
