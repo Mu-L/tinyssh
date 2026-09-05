@@ -1,3 +1,22 @@
+### 20260905 UNRELEASED
+- Added support for the `sntrup761x25519-sha512` key-exchange algorithm name.
+- Documented the supported SSH algorithms in README.md and tinysshd(8).
+- Added handling for SSH global requests and fixed rejected-packet sequence numbers; thanks to @dirkson for the bug report.
+- Fixed handling of SSH_MSG_IGNORE and SSH_MSG_DEBUG packets, including during strict key exchange; thanks to @Sven0nevS for the bug report.
+- Fixed several SSH protocol compliance issues, including minimum packet padding, none-authentication user validation, NUL bytes in text lines, data after disconnect and unknown channel types; thanks to @Zhaodl1 for the detailed report.
+- Fixed validation of public-key algorithm names.
+- Fixed handling of channel half-closes, child output EOF and zero-increment window adjustments.
+- Fixed PTY setup, ownership and cleanup error paths; thanks to @ishtiaqniloy for the bug report.
+- Fixed logging of terminal types.
+- Fixed self-pipe draining to prevent busy-polling.
+- Fixed close-on-exec handling when opening files and random-data sources.
+- Sanitised newlines in log messages.
+- Fixed base64 padding when encoding data at a non-zero buffer offset.
+- Fixed the fallback shell for accounts with an empty login shell.
+- Fixed cleanup of removed environment entries and removed unused or duplicate channel and packet state.
+- Stored client terminal dimensions as unsigned 32-bit values.
+- Fixed systemd variable substitution in the tinysshd(8) example.
+
 ### 20260601
 - Fixed validation of client-controlled channel parameters.
 - Fixed packet buffer bounds in plain-text and chacha20-poly1305 packet handling.
