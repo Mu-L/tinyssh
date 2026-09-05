@@ -20,8 +20,8 @@ int packet_unimplemented(struct buf *b) {
            ", sending SSH_MSG_UNIMPLEMENTED message");
 
     buf_purge(b);
-    buf_putnum8(b, SSH_MSG_UNIMPLEMENTED);   /* SSH_MSG_UNIMPLEMENTED */
-    buf_putnum32(b, packet.receivepacketid); /* packeid */
+    buf_putnum8(b, SSH_MSG_UNIMPLEMENTED);       /* SSH_MSG_UNIMPLEMENTED */
+    buf_putnum32(b, packet.receivepacketid - 1); /* packetid */
     packet_put(b);
     return packet_sendall();
 }
