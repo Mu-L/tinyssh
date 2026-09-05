@@ -78,46 +78,51 @@ static int packet_get_(struct buf *b) {
 
 int packet_get(struct buf *b, crypto_uint8 x) {
 
-    buf_purge(b);
-    if (!packet_get_(b)) return 0;
-    if (b->len <= 0) return 1;
-    if (!packet.flagauthorized)
-        if (packet.receivepacketid > PACKET_UNAUTHENTICATED_MESSAGES) {
-            errno = EPROTO;
-            log_f1("too many unauthenticated messages");
-            global_die(111);
-        }
+    int flagpacketignored;
 
-    switch (b->buf[0]) {
-        case SSH_MSG_DISCONNECT:
-            errno = 0;
-            return 0;
-        case SSH_MSG_IGNORE:
-        case SSH_MSG_DEBUG:
-            if (!packet.flagkeys) {
-                log_f1("SSH_MSG_IGNORE/SSH_MSG_DEBUG packet rejected in "
-                       "plain-text mode");
-                global_die(111);
-            }
-            buf_purge(b);
-            break;
-        case SSH_MSG_NEWKEYS:
-            /* strict kex - reset receivepacketid */
-            if (sshcrypto_kex_flags & sshcrypto_FLAGSTRICTKEX) {
-                packet.receivepacketid = 0;
-            }
-            break;
-        default:
-            if (x && x != b->buf[0]) {
-                char buf1[NUMTOSTR_LEN];
-                char buf2[NUMTOSTR_LEN];
+    do {
+        flagpacketignored = 0;
+        buf_purge(b);
+        if (!packet_get_(b)) return 0;
+        if (b->len <= 0) return 1;
+        if (!packet.flagauthorized)
+            if (packet.receivepacketid > PACKET_UNAUTHENTICATED_MESSAGES) {
                 errno = EPROTO;
-                log_f4("expected packet type ", numtostr(buf1, x), ", got ",
-                       numtostr(buf2, b->buf[0]));
+                log_f1("too many unauthenticated messages");
                 global_die(111);
             }
-            break;
-    }
+
+        switch (b->buf[0]) {
+            case SSH_MSG_DISCONNECT:
+                errno = 0;
+                return 0;
+            case SSH_MSG_IGNORE:
+            case SSH_MSG_DEBUG:
+                if (!packet.flagkeys) {
+                    log_f1("SSH_MSG_IGNORE/SSH_MSG_DEBUG packet rejected in "
+                           "plain-text mode");
+                    global_die(111);
+                }
+                flagpacketignored = 1;
+                break;
+            case SSH_MSG_NEWKEYS:
+                /* strict kex - reset receivepacketid */
+                if (sshcrypto_kex_flags & sshcrypto_FLAGSTRICTKEX) {
+                    packet.receivepacketid = 0;
+                }
+                break;
+            default:
+                if (x && x != b->buf[0]) {
+                    char buf1[NUMTOSTR_LEN];
+                    char buf2[NUMTOSTR_LEN];
+                    errno = EPROTO;
+                    log_f4("expected packet type ", numtostr(buf1, x),
+                           ", got ", numtostr(buf2, b->buf[0]));
+                    global_die(111);
+                }
+                break;
+        }
+    } while (flagpacketignored);
     return 1;
 }
 
