@@ -60,7 +60,11 @@ int getln(int fd, void *xv, long long xmax) {
         }
         r = getch(fd, &ch);
         if (r != 1) break;
-        if (ch == 0) ch = '\n';
+        if (ch == 0) {
+            x[xlen] = 0;
+            errno = EPROTO;
+            return -1;
+        }
         x[xlen++] = ch;
         if (ch == '\n') break;
     }
