@@ -11,6 +11,22 @@ Public domain.
 #include "bug.h"
 #include "log.h"
 #include "packet.h"
+#include "str.h"
+#include "stringparser.h"
+
+static int namelist_contains(const unsigned char *buf, long long len,
+                             const char *name) {
+    const unsigned char *x;
+    long long pos = 0;
+    long long xlen;
+
+    for (;;) {
+        pos = stringparser(buf, len, pos, &x, &xlen);
+        if (!pos) break;
+        if (str_equaln((const char *) x, xlen, name)) return 1;
+    }
+    return 0;
+}
 
 int packet_kex_send(void) {
 
@@ -75,7 +91,10 @@ int packet_kex_receive(void) {
     pos = packetparser_uint32(
         b->buf, b->len, pos, &len); /* encryption algorithms server to client */
     pos = packetparser_skip(b->buf, b->len, pos, len);
-    /* XXX assuming same as encryption algorithms client to server  */
+    if (!namelist_contains(b->buf + pos - len, len, sshcrypto_cipher_name)) {
+        errno = EPROTO;
+        return 0;
+    }
 
     pos = packetparser_uint32(b->buf, b->len, pos,
                               &len); /* mac algorithms client to server */
@@ -89,10 +108,18 @@ int packet_kex_receive(void) {
     pos = packetparser_uint32(b->buf, b->len, pos,
                               &len); /* compress algorithms client to server */
     pos = packetparser_skip(b->buf, b->len, pos, len);
+    if (!namelist_contains(b->buf + pos - len, len, "none")) {
+        errno = EPROTO;
+        return 0;
+    }
 
     pos = packetparser_uint32(b->buf, b->len, pos,
                               &len); /* compress algorithms server to client */
     pos = packetparser_skip(b->buf, b->len, pos, len);
+    if (!namelist_contains(b->buf + pos - len, len, "none")) {
+        errno = EPROTO;
+        return 0;
+    }
 
     pos = packetparser_uint32(b->buf, b->len, pos,
                               &len); /* languages client to server */
