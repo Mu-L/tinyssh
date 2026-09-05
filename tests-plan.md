@@ -1,6 +1,21 @@
 # Rozšíření testů SSH protokolu
 
-Stav plánu: návrh podle pracovního stromu prostudovaného 2026-09-05. Migrace stávajících SSH testů do `tests/` byla provedena; katalog nových testů zůstává plánem a nepotvrzuje jejich implementaci. Nové SSH testy vznikají výhradně v `tests/`.
+Stav plánu: první realizační vlna byla dokončena 2026-09-05. Stávající SSH testy jsou migrované do `tests/` a sedm navazujících protokolových oblastí má aktivní regresní testy. Podrobný katalog v §4 zůstává širším backlogem; položka v katalogu je splněná jen tehdy, pokud ji pokrývá níže uvedená aktivní sada nebo pozdější evidovaný test.
+
+### Stav první realizační vlny
+
+| Krok | Aktivní sada | Realizované pokrytí | Commit |
+| --- | --- | --- | --- |
+| Migrace testů | `make test-ssh`, `make -C tests test` | Samostatný build a runner v `tests/` podle vzoru `../pok/tests/`; produkční zdroje jsou připojené relativními symlinky. | `ae2a954` |
+| Parser a rámcování | `test-packet-protocol.sh` | Hranice SSH datových typů, zkrácené a přebytečné payloady, plaintext rámce, padding, délkové limity, fragmentace a více paketů v bufferu. | `f5ec39e` |
+| Pořadová čísla | `test-packet-sequence.sh` | Send/receive čítače, neúplný paket, IGNORE/DEBUG, strict/non-strict NEWKEYS, wrap a neautentizovaný limit. | `fd26a22` |
+| KEX protokol | `test-kex-protocol.sh` | KEXINIT seznamy a směry, komprese, guess, KEXDH_INIT, NEWKEYS, strict KEX a chybné pořadí zpráv. | `6396a8d` |
+| Autentizace | `test-auth-protocol.sh` | Service request, `none`, publickey probe a podpisová větev, identity a NUL, neplatné algoritmy/bloby, limity a stavové přechody. | `6901d44` |
+| Session channel | `test-channel-protocol.sh` | Otevření kanálu, globální a channel requesty, shell/exec/subsystem, env, PTY, data, extended data, EOF a CLOSE. | `ebc84be` |
+| Tok a uzavření kanálu | `test-channel-flow.sh` | Okna, WINDOW_ADJUST, stdout/stderr kredit, overflow, EPIPE, EOF/CLOSE pořadí a ukončení dítěte. | `287caaa` |
+| Rekey | `test-rekey-protocol.sh` | Opakovaný rekey, nová nabídka algoritmů, zachování stavu a pořadových čísel a chybné rekey payloady. | `39445c9` |
+
+Základní sada nyní spouští 10 SSH skriptů. Crypto testy nejsou její součástí; kryptografické moduly se pouze linkují pro handshake v protokolových testech. Test závislý na externím OpenSSH klientovi není součástí sestavení ani základní sady.
 
 ## 1. Rozsah
 
@@ -18,10 +33,10 @@ Mimo rozsah jsou také CLI samo o sobě, instalace, systémové služby, obecné
 | Vypnuté testy v témže skriptu | Limit neautentizovaných zpráv je zakomentovaný; hello/KEX helpery za `#temporary removed` a `exit 0` se nespouštějí. | Obnovovat podle významu testu, ne mechanicky odstraňovat `exit 0`. |
 | `test-tinysshd-ignore.sh`, `_tinysshd-test-ignore.c` | Devět kombinací IGNORE/DEBUG před KEXINIT nebo před KEXDH_INIT, strict i non-strict. Úspěšná větev končí po KEXDH_REPLY. | Chybí čekání na NEWKEYS, provoz po něm, rekey a úplná kontrola odpovědí/ukončení. |
 | `test-packet-global-request.sh`, `_tinysshd-test-global-request.c` | Přímý handler: want-reply 0/1, payload u true, jeden zkrácený paket. | Doplnit varianty parseru a zapojení do skutečné autentizované smyčky. |
-| `test-tinysshnoneauthd.sh` | Obsahuje pouze shebang a `exit 0`. | Úspěch této položky není žádné pokrytí autentizace `none`. |
+| `test-tinysshnoneauthd.sh` | Původní prázdný test i pozdější varianta závislá na OpenSSH klientovi byly odstraněny. | Úplná E relace zůstává backlogem pro samostatné prostředí s explicitně zajištěným klientem. |
 | `old/tinyssh-tests/` | Starší testy parseru, seznamů a kanálu; nejsou v aktuálním `TESTOUT`. Část pozitivních testů `channeltest.c` leží za `_exit(0)`. | Převzít užitečné scénáře, přepsat zastaralé předpoklady a zapojit do aktivní sady. |
 | `runtest.sh` | Porovnává stdout s `.exp`; návratový kód samotného skriptu samostatně nevyhodnocuje. | Nové SSH skripty musí spolehlivě propagovat selhání; upravit runner tak, aby shodný stdout nemaskoval chybu. |
-| `Makefile`, `makefilegen.sh` | Generované testové cíle zahrnují i crypto testy; závislosti SSH `.out` obsahují `TESTCRYPTOBINARIES`. | Přesunout SSH build a runner do `tests/`, upravit oba generátory a delegovat z kořene. Crypto testy do této práce nezařazovat. |
+| `tests/Makefile`, `tests/makefilegen.sh` | Samostatně sestavují a spouštějí SSH sadu; kořenový cíl `test-ssh` do ní deleguje. | Rozšíření udržovat v generátoru i generovaném Makefile. Crypto testy do této sady nezařazovat. |
 
 ### Konkrétní místa s vysokou hodnotou nových testů
 
@@ -31,12 +46,12 @@ Jde o zjištění ze statického čtení, nikoli o reprodukované chyby. Očeká
 | --- | --- | --- |
 | `packet_hello.c` | Příjem kontroluje hlavně minimální délku a prefix `SSH-`; úplná syntaxe a verze nejsou výslovně ověřeny. `getln.c` už odmítá NUL. | HEL |
 | `packet_get.c`, `packet_put.c` | Pořadová čísla, limit 30 neautentizovaných zpráv, zvláštní větev NEWKEYS a strict reset. NEWKEYS obchází obecné porovnání očekávaného typu. | FRM, SEQ, ORD, SKX |
-| `packet_kex.c` | S→C šifra se jen přeskočí s komentářem o předpokladu stejné šifry; kompresní seznamy se nevybírají. | NEG |
+| `packet_kex.c` | Směry šifer i kompresní seznamy se validují; aktivní KEX testy obsahují rozdílné a nepodporované nabídky. | NEG |
 | `packet_kexdh.c` | Chybný guess zahazuje paket přes čtení očekávající KEXDH_INIT. Non-strict čekání na NEWKEYS zahazuje jiné zprávy. | GSS, KEY, RK |
-| `main_tinysshd.c`, `sshcrypto_kex.c` | Rekey kopíruje nový KEXINIT do bufferu, ale nevolá `packet_kex_receive()`; selektory navíc drží již zvolený algoritmus. | RK |
-| `packet_auth.c` | Probe publickey vrací PK_OK před autorizací; tato větev nemá `packetparser_end()`. Jméno účtu se kopíruje do C stringu bez samostatného odmítnutí vnitřního NUL. | AUT, PUB, NON |
+| `main_tinysshd.c`, `packet_kex.c`, `sshcrypto_kex.c` | Rekey znovu parsuje KEXINIT a vybírá algoritmy z nové nabídky; regresní test hlídá odmítnutí neplatné nabídky i zachování stavu relace. | RK |
+| `packet_auth.c` | Publickey probe, úplnost payloadu a NUL v identitě pokrývá aktivní autentizační sada. | AUT, PUB, NON |
 | `packet_channel_open.c` | Jediný session kanál; stejné lokální i vzdálené ID; maxpacket se omezí do 32…32768, inzerováno 16384. | OPN, DAT, WIN |
-| `packet_channel_recv.c` | Příchozí EXTENDED_DATA se celé zahodí bez kontroly ID, délky a okna. | EXT |
+| `packet_channel_recv.c` | Příchozí EXTENDED_DATA validuje ID, datový typ, délku a společné okno; aktivní channel testy pokrývají chybné varianty. | EXT |
 | `packet_channel_request.c` | Převod stringů na C stringy; `pty-req` má TODO pro terminal modes. `env` po startu končí v interní chybové větvi `channel_env()`. | REQ, ENV, PTY |
 | `channel.c` | Existují větve pro pozdní data a EPIPE; oba výstupy sdílejí remote window; přetečení okna je kontrolováno. | DAT, WIN, END |
 | `main_tinysshd.c` | Po DISCONNECT se v hlavní smyčce přechází na `finished`; čtení, vyprázdnění bufferů a ukončení dítěte jsou časově provázané. | CTL, END, IO |
@@ -814,7 +829,6 @@ Názvy při prvním přesunu byly zachovány, aby byl diff snadno kontrolovateln
 | `test-tinysshd.sh`, `test-tinysshd.exp` | `tests/test-tinysshd.sh`, `tests/test-tinysshd.exp`; při čisté migraci zachovat rozsah aktivních scénářů. |
 | `test-tinysshd-ignore.sh`, `.exp`, `_tinysshd-test-ignore.c` | Stejná jména v `tests/`. |
 | `test-packet-global-request.sh`, `.exp`, `_tinysshd-test-global-request.c` | Stejná jména v `tests/`. |
-| `test-tinysshnoneauthd.sh`, `.exp` | Stejná jména v `tests/`; stále vykazovat dosavadní prázdný test jako nepokrytí až do realizace NON. |
 | `_tinysshd-test-hello1.c`, `_tinysshd-test-hello2.c`, `_tinysshd-test-kex1.c`, `_tinysshd-test-kex2.c` | Přesun do `tests/`; jejich vypnuté scénáře obnovovat až samostatným krokem. |
 | `_tinysshd-unauthenticated.c`, `_tinysshd-printkex.c` | Přesun do `tests/` jako SSH testovací helpery. |
 | `runtest.sh` | SSH část nahradí `tests/test.sh`; kořenový runner zatím zachovat pro nemigrované testy, které jej stále používají. |
@@ -833,7 +847,6 @@ tests/
   test-tinysshd.sh / .exp       # migrované skripty a očekávání
   test-tinysshd-ignore.sh / .exp
   test-packet-global-request.sh / .exp
-  test-tinysshnoneauthd.sh / .exp
   _tinysshd-test-*.c            # migrované i nové testovací programy
   _tinysshd-printkex.c
   _tinysshd-unauthenticated.c
@@ -855,7 +868,7 @@ Jádro sady bude ploché jako v POK; původně navrhovaná samostatná hierarchi
 ### Sestavení, runner a kořenové cíle
 
 1. Přidat `tests/makefilegen.sh`, který podle zdejších zdrojů a symlinků generuje `tests/Makefile`. Změny pravidel provádět v generátoru a regenerovat Makefile; upravit také kořenový generátor, ne pouze jeho výstup. Regenerace při stejných vstupech je deterministická.
-2. Testovací binárky a potřebnou variantu `tinysshd` sestavovat z lokálních objektů v `tests/`, včetně symlinků/utilit `tinysshd-makekey` a `tinysshnoneauthd`, které používají fixture. Nesdílet `.o` s produkčním buildem; testovací makra a sanitizer flags nesmějí zneplatnit produkční artefakty ani naopak. Testovací seam nesmí být podmínkou jediného E ověření: klíčové E scénáře spustit i proti produkční variantě bez mocků.
+2. Testovací binárky a potřebné utility sestavovat z lokálních objektů v `tests/`, včetně symlinku `tinysshd-makekey`, který používají fixture. Nesdílet `.o` s produkčním buildem; testovací makra a sanitizer flags nesmějí zneplatnit produkční artefakty ani naopak. Testovací seam nesmí být podmínkou jediného E ověření: klíčové E scénáře spustit i proti produkční variantě bez mocků.
 3. Pro závislosti zachovat TinySSH feature detection, `tryfeature.sh`, `trylibs.sh`, potřebné `has*.c`, generované `has*.h`, `libs`, logy a `randombytes.o`. Skripty a zdrojové sondy sdílet relativními odkazy; generované výsledky vytvářet lokálně. Závislosti hlaviček generovat se správnou cestou `-I../cryptoint`; include cesty, `CC`, `CFLAGS`, `CPPFLAGS` a `LDFLAGS` musí fungovat i při přímém `make -C tests` v čistém checkoutu.
 4. `tests/test.sh` vybírá stabilně seřazené dvojice `.sh`/`.exp` základní SSH sady a explicitně odlišuje integrační či dlouhé scénáře. Samotný runner a generátor se nespouštějí jako testy. Chybějící `.exp` u registrovaného golden testu je chyba, ne tiché přeskočení. Integrační test bez `.exp` má explicitní registraci a kontrolu návratového kódu.
 5. Runner kontroluje **návratový kód skriptu i shodu očekávání**. Očekávané neúspěchy daemonu posuzuje konkrétní skript/harness a při splnění kontraktu sám vrací 0. Normalizace přes `sed` nesmí zakrýt neúspěch předchozí části pipeline. Při nesouladu zachovat `.out` a diagnostiku.
