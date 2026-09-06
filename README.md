@@ -6,6 +6,10 @@
 * tinysshd doesn't have features such: SSH1 protocol, compression, port forwarding, agent forwarding, X11 forwarding ...
 * tinysshd doesn't use dynamic memory allocation (no allocation failures, etc.)
 
+### Important change since version 20260906 ###
+
+Starting with version 20260906, TinySSH rejects all client-supplied environment variables (`env` channel requests) for security reasons. This may affect configurations using OpenSSH `SendEnv` or `SetEnv`; any required variables must be set on the server instead.
+
 ### Supported SSH algorithms ###
 
 As of version 20260601, TinySSH supports the following SSHv2 algorithms:
