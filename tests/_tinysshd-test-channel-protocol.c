@@ -158,8 +158,7 @@ static int envrequest(int embeddedzero, const char *customcmd) {
         buf_putstring(&b1, "LANG");
     buf_putstring(&b1, "C");
     if (!packet_channel_request(&b1, &b2, customcmd)) return 0;
-    return replytype(embeddedzero || customcmd ? SSH_MSG_CHANNEL_FAILURE
-                                               : SSH_MSG_CHANNEL_SUCCESS);
+    return replytype(SSH_MSG_CHANNEL_FAILURE);
 }
 
 enum fatalmode {

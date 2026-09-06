@@ -3,7 +3,7 @@
 - Fixed `authorized_keys` path validation to check the opened file and every directory in its canonical path, including symlink targets.
 - Added support for the `sntrup761x25519-sha512` key-exchange algorithm name.
 - Documented the supported SSH algorithms in README.md and tinysshd(8).
-- Rejected client-supplied environment variables when a forced command is configured with `-e`, preventing environment-based forced-command bypasses.
+- Rejected all client-supplied environment variables for security reasons, extending the existing restriction for forced commands configured with `-e` to every session.
 - Expanded SSH protocol tests to cover packet parsing and framing, sequence numbers, key exchange and rekey, authentication, global requests, session channels, flow control and connection shutdown.
 - Consolidated all SSH, cryptographic, makekey and printkey tests under `tests/` with a common build and runner; `make test` runs the complete standard suite while `make test-ssh` runs only tests requiring an SSH client, including forced-command environment isolation.
 - Added handling for SSH global requests and fixed rejected-packet sequence numbers; thanks to @dirkson for the bug report.

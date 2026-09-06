@@ -23,6 +23,10 @@ doesn't have features such: SSH1 protocol, compression, port forwarding, agent f
 .sp
 .B tinysshd
 doesn't use dynamic memory allocation (no allocation failures, etc.)
+.sp
+.B tinysshd
+rejects all client \fIenv\fR channel requests for security reasons. The terminal
+type supplied as part of a PTY request remains supported.
 .SH OPTIONS
 .TP
 .B \-q
@@ -69,7 +73,7 @@ add subsystem command (e.g.: sftp=/usr/libexec/openssh/sftp\-server)
 .TP
 .B \-e \fIcommand
 execute the given command instead of spawning the shell (disables
-\fIenv\fR/\fIexec\fR/\fIsubsystem\fR channel requests)
+\fIexec\fR/\fIsubsystem\fR channel requests)
 .TP
 .I keydir
 directory containing TinySSH keys, typically /etc/tinyssh/sshkeydir

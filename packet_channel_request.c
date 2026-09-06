@@ -177,22 +177,10 @@ int packet_channel_request(struct buf *b1, struct buf *b2,
         p1[plen1] = 0;
         p2[plen2] = 0;
 
-        if (customcmd) {
-            log_d5("packet=SSH_MSG_CHANNEL_REQUEST, env ", p1, "=", p2,
-                   ", rejected: env not allowed with -e for security reasons");
-            goto reject;
-        }
-
-        if (channel_env(p1, p2)) {
-            log_d5("packet=SSH_MSG_CHANNEL_REQUEST, env ", p1, "=", p2,
-                   ", accepted");
-            goto accept;
-        }
-        else {
-            log_d5("packet=SSH_MSG_CHANNEL_REQUEST, env ", p1, "=", p2,
-                   ", rejected");
-            goto reject;
-        }
+        log_d5("packet=SSH_MSG_CHANNEL_REQUEST, env ", p1, "=", p2,
+               ", rejected: environment variables disabled for security "
+               "reasons");
+        goto reject;
     }
 
     if (str_equaln(cmd, cmdlen, "pty-req")) {

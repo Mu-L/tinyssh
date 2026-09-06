@@ -15,6 +15,10 @@ under which
 is running.
 To accept multiple account names, each name must resolve through the system
 account database to this same UID.
+.sp
+.B tinysshnoneauthd
+rejects all client \fIenv\fR channel requests for security reasons. The terminal
+type supplied as part of a PTY request remains supported.
 .SH OPTIONS
 .TP
 .B \-q
@@ -34,7 +38,7 @@ don't use syslog, use standard error output (default)
 .TP
 .B \-e \fIcommand
 execute the given command instead of spawning the shell (disables
-\fIenv\fR/\fIexec\fR/\fIsubsystem\fR channel requests)
+\fIexec\fR/\fIsubsystem\fR channel requests)
 .TP
 .I keydir
 directory containing TinySSH keys, typically /etc/tinyssh/sshkeydir
