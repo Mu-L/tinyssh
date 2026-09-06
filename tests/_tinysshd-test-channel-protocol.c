@@ -145,7 +145,7 @@ static int statefulrequests(void) {
     return replytype(SSH_MSG_CHANNEL_FAILURE);
 }
 
-static int envrequest(int embeddedzero) {
+static int envrequest(int embeddedzero, const char *customcmd) {
     static const unsigned char badname[] = {'L', 'A', 'N', 'G', 0, 'X'};
 
     reset();
@@ -157,9 +157,9 @@ static int envrequest(int embeddedzero) {
     else
         buf_putstring(&b1, "LANG");
     buf_putstring(&b1, "C");
-    if (!packet_channel_request(&b1, &b2, 0)) return 0;
-    return replytype(embeddedzero ? SSH_MSG_CHANNEL_FAILURE
-                                  : SSH_MSG_CHANNEL_SUCCESS);
+    if (!packet_channel_request(&b1, &b2, customcmd)) return 0;
+    return replytype(embeddedzero || customcmd ? SSH_MSG_CHANNEL_FAILURE
+                                               : SSH_MSG_CHANNEL_SUCCESS);
 }
 
 enum fatalmode {
@@ -210,8 +210,9 @@ int main(void) {
     if (!request("unknown@example", 0, 0)) ok = 0;
     if (!execandsubsystem()) ok = 0;
     if (!statefulrequests()) ok = 0;
-    if (!envrequest(0)) ok = 0;
-    if (!envrequest(1)) ok = 0;
+    if (!envrequest(0, 0)) ok = 0;
+    if (!envrequest(1, 0)) ok = 0;
+    if (!envrequest(0, "true")) ok = 0;
     if (!fatal(WRONG_ID)) ok = 0;
     if (!fatal(SHELL_TRAILING)) ok = 0;
     if (!fatal(TRUNCATED_REQUEST)) ok = 0;

@@ -72,9 +72,8 @@ int packet_channel_request(struct buf *b1, struct buf *b2,
         }
 
         if (customcmd) {
-            log_d4("packet=SSH_MSG_CHANNEL_REQUEST, exec ", p1,
-                   ", rejected: custom program is selected using param. -e ",
-                   customcmd);
+            log_d3("packet=SSH_MSG_CHANNEL_REQUEST, exec ", p1,
+                   ", rejected: request disabled by -e");
             goto reject;
         }
 
@@ -106,9 +105,8 @@ int packet_channel_request(struct buf *b1, struct buf *b2,
         }
 
         if (customcmd) {
-            log_d4("packet=SSH_MSG_CHANNEL_REQUEST, subsystem ", p1,
-                   ", rejected: custom program is selected using param. -e ",
-                   customcmd);
+            log_d3("packet=SSH_MSG_CHANNEL_REQUEST, subsystem ", p1,
+                   ", rejected: request disabled by -e");
             goto reject;
         }
 
@@ -178,6 +176,12 @@ int packet_channel_request(struct buf *b1, struct buf *b2,
         if (stringhaszero(p1, plen1) || stringhaszero(p2, plen2)) goto reject;
         p1[plen1] = 0;
         p2[plen2] = 0;
+
+        if (customcmd) {
+            log_d5("packet=SSH_MSG_CHANNEL_REQUEST, env ", p1, "=", p2,
+                   ", rejected: env not allowed with -e for security reasons");
+            goto reject;
+        }
 
         if (channel_env(p1, p2)) {
             log_d5("packet=SSH_MSG_CHANNEL_REQUEST, env ", p1, "=", p2,
