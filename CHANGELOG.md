@@ -1,6 +1,8 @@
 ### 20260905 UNRELEASED
 - Added support for the `sntrup761x25519-sha512` key-exchange algorithm name.
 - Documented the supported SSH algorithms in README.md and tinysshd(8).
+- Expanded SSH protocol tests to cover packet parsing and framing, sequence numbers, key exchange and rekey, authentication, global requests, session channels, flow control and connection shutdown.
+- Consolidated all SSH, cryptographic, makekey and printkey tests under `tests/` with a common build and runner; `make test` runs the complete suite while `make test-ssh` runs only SSH protocol tests.
 - Added handling for SSH global requests and fixed rejected-packet sequence numbers; thanks to @dirkson for the bug report.
 - Fixed handling of SSH_MSG_IGNORE and SSH_MSG_DEBUG packets, including during strict key exchange; thanks to @Sven0nevS for the bug report.
 - Fixed several SSH protocol compliance issues, including minimum packet padding, none-authentication user validation, NUL bytes in text lines, data after disconnect and unknown channel types; thanks to @Zhaodl1 for the detailed report.
