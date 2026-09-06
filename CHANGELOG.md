@@ -1,4 +1,4 @@
-### 20260905 UNRELEASED
+### 20260906 (pre-release)
 - tinyssh-convert: reject inconsistent Ed25519 key material in OpenSSH private-key files.
 - Fixed `authorized_keys` path validation to check the opened file and every directory in its canonical path, including symlink targets.
 - Added support for the `sntrup761x25519-sha512` key-exchange algorithm name.
