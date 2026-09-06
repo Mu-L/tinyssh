@@ -19,10 +19,8 @@ export LANG
     links='tinysshd-makekey tinysshd-printkey tinysshnoneauthd'
     autoheaders=''
     binaries=''
-    testcryptobinaries=''
     objlib=''
     objall=''
-    outfiles=''
     for file in `ls -1`; do
       ofile=`echo ${file} | sed 's/\.c$/.o/'`
       hfile=`echo ${file} | sed 's/\.c$/.h/'`
@@ -32,15 +30,6 @@ export LANG
         ;;
         has*\.c)
           autoheaders="${autoheaders} `echo ${file} | sed 's/\.c/.h/'`"
-        ;;
-        test-*\.sh)
-          outfiles="${outfiles} `echo ${file} | sed 's/\.sh/.out/'`"
-        ;;
-        test-crypto.c)
-          if grep '^int main(' "${file}" >/dev/null; then
-            testcryptobinaries="${testcryptobinaries} `echo ${file} | sed 's/\.c$//'`"
-          fi
-          objall="${objall} ${ofile}"
         ;;
         *\.c)
           if grep '^int main(' "${file}" >/dev/null; then
@@ -62,9 +51,6 @@ export LANG
     echo "`echo BINARIES=${binaries} | fold -s | sed 's/^/ /' | sed 's/^ BINARIES= /BINARIES=/' | sed 's/ $/ \\\\/'`"
     echo
 
-    echo "`echo TESTCRYPTOBINARIES=${testcryptobinaries} | fold -s | sed 's/^/ /' | sed 's/^ TESTCRYPTOBINARIES= /TESTCRYPTOBINARIES=/' | sed 's/ $/ \\\\/'`"
-    echo
-
     echo "`echo OBJLIB=${objlib} | fold -s | sed 's/^/ /' | sed 's/^ OBJLIB= /OBJLIB=/' | sed 's/ $/ \\\\/'`"
     echo
 
@@ -74,13 +60,12 @@ export LANG
     echo "`echo AUTOHEADERS=${autoheaders} | fold -s | sed 's/^/ /' | sed 's/^ AUTOHEADERS= /AUTOHEADERS=/' | sed 's/ $/ \\\\/'`"
     echo
 
-    echo "`echo TESTOUT=${outfiles} | fold -s | sed 's/^/ /' | sed 's/^ TESTOUT= /TESTOUT=/' | sed 's/ $/ \\\\/'`"
-    echo
-
     echo "all: \$(AUTOHEADERS) \$(BINARIES) \$(LINKS)"
     echo
 
-    touch ${autoheaders}
+    for hfile in ${autoheaders}; do
+      : > "${hfile}"
+    done
     for ofile in ${objall}; do
       (
         cfile=`echo ${ofile} | sed 's/\.o/.c/'`
@@ -100,15 +85,6 @@ export LANG
     done
     echo
 
-    for file in ${testcryptobinaries}; do
-      ofile="${file}.o"
-      echo "${file}: ${ofile} \$(OBJLIB) libs"
-      echo "	\$(CC) \$(CFLAGS) \$(CPPFLAGS) -o ${file} ${ofile} \\"
-      echo "	\$(OBJLIB) \$(LDFLAGS) \`cat libs\`"
-      echo
-    done
-    echo
-
     for hfile in ${autoheaders}; do
       cfile=`echo ${hfile} | sed 's/\.h/.c/'`
       lfile=`echo ${cfile} | sed 's/\.c/.log/'`
@@ -120,20 +96,12 @@ export LANG
       echo
     done
 
-    for outfile in ${outfiles}; do
-      expfile=`echo ${outfile} | sed 's/\.out/.exp/'`
-      shfile=`echo ${outfile} | sed 's/\.out/.sh/'`
-      echo "${outfile}: \$(BINARIES) \$(TESTCRYPTOBINARIES) \$(LINKS) runtest.sh ${shfile} ${expfile}"
-      echo "	sh runtest.sh ${shfile} ${outfile} ${expfile}"
-      echo
-    done
-
-    echo "test: \$(TESTOUT)"
+    echo "test:"
     echo "	\$(MAKE) -C tests test"
     echo
 
     echo "test-ssh:"
-    echo "	\$(MAKE) -C tests test"
+    echo "	\$(MAKE) -C tests test-ssh"
     echo
 
     echo "libs: trylibs.sh"
@@ -171,7 +139,7 @@ export LANG
 
     echo "clean:"
     echo "	\$(MAKE) -C tests clean"
-    echo "	rm -f *.log libs \$(OBJLIB) \$(OBJALL) \$(BINARIES) \$(TESTCRYPTOBINARIES) \$(LINKS) \$(AUTOHEADERS) \$(TESTOUT)"
+    echo "	rm -f *.log libs \$(OBJLIB) \$(OBJALL) \$(BINARIES) \$(LINKS) \$(AUTOHEADERS)"
     echo 
 
   ) > Makefile

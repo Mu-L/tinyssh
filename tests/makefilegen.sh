@@ -5,12 +5,14 @@ cd "$(dirname "$0")" || exit 111
 LANG=C
 export LANG
 
-programs='_tinysshd-printkex _tinysshd-test-auth-protocol _tinysshd-test-channel-flow _tinysshd-test-channel-protocol _tinysshd-test-global-request _tinysshd-test-hello1 _tinysshd-test-hello2 _tinysshd-test-ignore _tinysshd-test-kex-protocol _tinysshd-test-kex1 _tinysshd-test-kex2 _tinysshd-test-packet _tinysshd-test-rekey-protocol _tinysshd-test-sequence _tinysshd-unauthenticated tinysshd'
-links='tinysshd-makekey'
+programs='_tinysshd-printkex _tinysshd-test-auth-protocol _tinysshd-test-channel-flow _tinysshd-test-channel-protocol _tinysshd-test-global-request _tinysshd-test-hello1 _tinysshd-test-hello2 _tinysshd-test-ignore _tinysshd-test-kex-protocol _tinysshd-test-kex1 _tinysshd-test-kex2 _tinysshd-test-packet _tinysshd-test-rekey-protocol _tinysshd-test-sequence _tinysshd-unauthenticated test-crypto tinysshd'
+links='tinysshd-makekey tinysshd-printkey'
 autoheaders=''
 objects=''
 allobjects=''
 testout=''
+tests=''
+sshtests=''
 
 for file in *.c; do
     object=${file%.c}.o
@@ -31,7 +33,7 @@ for file in *.c; do
         _tinysshd-test-kex2.c | _tinysshd-test-packet.c | \
         _tinysshd-test-rekey-protocol.c | \
         _tinysshd-test-sequence.c | \
-        _tinysshd-unauthenticated.c | tinysshd.c)
+        _tinysshd-unauthenticated.c | test-crypto.c | tinysshd.c)
             ;;
         *)
             objects="$objects $object"
@@ -41,6 +43,15 @@ done
 
 for file in test-*.sh; do
     testout="$testout ${file%.sh}.out"
+    tests="$tests $file"
+    case "$file" in
+        test-crypto-*.sh | test-tinysshd-makekey.sh | \
+        test-tinysshd-printkey.sh)
+            ;;
+        *)
+            sshtests="$sshtests $file"
+            ;;
+    esac
 done
 
 (
@@ -55,11 +66,15 @@ done
     echo "ALLOBJECTS=$allobjects"
     echo "AUTOHEADERS=$autoheaders"
     echo "TESTOUT=$testout"
+    echo "TESTS=$tests"
+    echo "SSHTESTS=$sshtests"
     echo
     echo 'all: $(AUTOHEADERS) $(PROGRAMS) $(LINKS)'
     echo
 
-    touch $autoheaders
+    for header in $autoheaders; do
+        : > "$header"
+    done
     for object in $allobjects; do
         source=${object%.o}.c
         ${CC:-cc} -MM -isystem /usr/local/include -I../cryptoint "$source"
@@ -69,10 +84,14 @@ done
     rm -f $autoheaders
 
     for program in $programs; do
-        echo "$program: $program.o \$(OBJECTS) randombytes.o libs"
+        randomobject=' randombytes.o'
+        if test "$program" = test-crypto; then
+            randomobject=''
+        fi
+        echo "$program: $program.o \$(OBJECTS)$randomobject libs"
         printf '\t$(CC) $(CFLAGS) $(CPPFLAGS) -o %s %s.o \\\n' \
             "$program" "$program"
-        printf '\t$(OBJECTS) $(LDFLAGS) `cat libs` randombytes.o\n'
+        printf '\t$(OBJECTS) $(LDFLAGS) `cat libs`%s\n' "$randomobject"
         echo
     done
 
@@ -96,7 +115,10 @@ done
     done
 
     echo 'test: $(PROGRAMS) $(LINKS)'
-    echo '\tsh test.sh'
+    echo '\tsh test.sh $(TESTS)'
+    echo
+    echo 'test-ssh: $(filter-out test-crypto,$(PROGRAMS)) tinysshd-makekey'
+    echo '\tsh test.sh $(SSHTESTS)'
     echo
     echo 'libs: trylibs.sh'
     echo '\tenv CC="$(CC)" ./trylibs.sh -lsocket -lnsl -lutil -lrandombytes -l25519 -l1305 -lntruprime >libs 2>libs.log'
@@ -106,7 +128,11 @@ done
     echo '\trm -f tinysshd-makekey'
     echo '\tln -s tinysshd tinysshd-makekey'
     echo
+    echo 'tinysshd-printkey: tinysshd'
+    echo '\trm -f tinysshd-printkey'
+    echo '\tln -s tinysshd tinysshd-printkey'
+    echo
     echo 'clean:'
     echo '\trm -f *.log *.o *.out libs $(PROGRAMS) $(LINKS) $(AUTOHEADERS)'
-    echo '\trm -rf keydir keydir-ignore'
+    echo '\trm -rf -- keydir keydir-ignore keydirm keydirp -m -r'
 ) >Makefile

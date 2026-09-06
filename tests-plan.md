@@ -15,7 +15,7 @@ Stav plánu: první realizační vlna byla dokončena 2026-09-05. Stávající S
 | Tok a uzavření kanálu | `test-channel-flow.sh` | Okna, WINDOW_ADJUST, stdout/stderr kredit, overflow, EPIPE, EOF/CLOSE pořadí a ukončení dítěte. | `287caaa` |
 | Rekey | `test-rekey-protocol.sh` | Opakovaný rekey, nová nabídka algoritmů, zachování stavu a pořadových čísel a chybné rekey payloady. | `39445c9` |
 
-Základní sada nyní spouští 10 SSH skriptů. Crypto testy nejsou její součástí; kryptografické moduly se pouze linkují pro handshake v protokolových testech. Test závislý na externím OpenSSH klientovi není součástí sestavení ani základní sady.
+SSH sada nyní spouští 10 protokolových skriptů. Úplný cíl `make test` navíc spouští sedm migrovaných crypto testů a dva testy utilit; celkem je v `tests/` 19 aktivních skriptů. Test závislý na externím OpenSSH klientovi není součástí sestavení ani žádné sady.
 
 ## 1. Rozsah
 
@@ -35,8 +35,8 @@ Mimo rozsah jsou také CLI samo o sobě, instalace, systémové služby, obecné
 | `test-packet-global-request.sh`, `_tinysshd-test-global-request.c` | Přímý handler: want-reply 0/1, payload u true, jeden zkrácený paket. | Doplnit varianty parseru a zapojení do skutečné autentizované smyčky. |
 | `test-tinysshnoneauthd.sh` | Původní prázdný test i pozdější varianta závislá na OpenSSH klientovi byly odstraněny. | Úplná E relace zůstává backlogem pro samostatné prostředí s explicitně zajištěným klientem. |
 | `old/tinyssh-tests/` | Starší testy parseru, seznamů a kanálu; nejsou v aktuálním `TESTOUT`. Část pozitivních testů `channeltest.c` leží za `_exit(0)`. | Převzít užitečné scénáře, přepsat zastaralé předpoklady a zapojit do aktivní sady. |
-| `runtest.sh` | Porovnává stdout s `.exp`; návratový kód samotného skriptu samostatně nevyhodnocuje. | Nové SSH skripty musí spolehlivě propagovat selhání; upravit runner tak, aby shodný stdout nemaskoval chybu. |
-| `tests/Makefile`, `tests/makefilegen.sh` | Samostatně sestavují a spouštějí SSH sadu; kořenový cíl `test-ssh` do ní deleguje. | Rozšíření udržovat v generátoru i generovaném Makefile. Crypto testy do této sady nezařazovat. |
+| `tests/test.sh` | Společný runner kontroluje návratový kód skriptu i shodu stdout s `.exp` a umí dostat explicitní seznam testů. | Stejný runner obsluhuje úplnou i SSH sadu bez maskování chyby shodným stdout. |
+| `tests/Makefile`, `tests/makefilegen.sh` | Samostatně sestavují všechny testy; cíle `test` a `test-ssh` oddělují úplnou a čistě SSH sadu. | Rozšíření udržovat v generátoru i generovaném Makefile. |
 
 ### Konkrétní místa s vysokou hodnotou nových testů
 
@@ -77,7 +77,7 @@ V pozitivních E testech kontrolovat obsah stdout/stderr, přesný exit status, 
 5. Náhodný cookie, padding, log ID, PID a čas neporovnávat byte-for-byte. Dekódovat strukturu, délky, typy, příjemce a obsah relevantních polí.
 6. Odeslanou odpověď dekódovat jednoduchým nezávislým dekodérem. Nepoužívat pouze roundtrip přes stejný chybný parser/serializer.
 7. Ve výsledku uvést ID, seed, fázi, přijaté typy, dekódovaná pole, stav procesu a důvod selhání. Každé SKIP uvádí konkrétní chybějící předpoklad; požadované CI prostředí žádný povinný test nepřeskakuje.
-8. `make test-ssh` a přímý `make -C tests test` spouštějí migrovanou základní SSH sadu. `make test-ssh-integration` a `make test-ssh-fuzz-smoke` zůstávají navrhované cíle pro budoucí rozšíření. Základní SSH cíl nespouští ani nevyžaduje binárku `test-crypto`; linkování existující kryptografie pro handshake je v pořádku. Podrobnosti migrace a zachování dosavadního `make test` určuje §6.
+8. `make test-ssh` a přímý `make -C tests test-ssh` spouštějí migrovanou základní SSH sadu. `make test` a `make -C tests test` spouštějí všechny testy včetně crypto a utilit. `make test-ssh-integration` a `make test-ssh-fuzz-smoke` zůstávají navrhované cíle pro budoucí rozšíření. Základní SSH cíl nespouští ani nevyžaduje binárku `test-crypto`; linkování existující kryptografie pro handshake je v pořádku.
 
 ### Význam priorit a očekávání
 
@@ -818,7 +818,7 @@ První malá dodávka s největší hodnotou: PAR-07/08/12, FRM-08/10, SEQ-09/14
 
 Prostudovaný vzor má plochý adresář s testovacími `.c`, dvojicemi `.sh`/`.exp`, vlastním `makefilegen.sh`, generovaným `Makefile` a runnerem `test.sh`. Například `../pok/tests/packet.c`, `byte.c` a `pok-server.c` jsou relativní symlinky na produkční zdroje o adresář výše. Objekty i testovací binárky se sestavují uvnitř `tests/`; kořenový `makefilegen.sh` generuje delegaci `$(MAKE) test -C tests` a `$(MAKE) clean -C tests`.
 
-Převzít tento způsob organizace, sdílení zdrojů a samostatného sestavení. Testy TinySSH zůstanou přizpůsobené zdejšímu API, loggeru, licencím a feature detection. Nekopírovat specifické linkovací knihovny POK, jeho crypto testy ani jeho případné vady runneru: i `pok/tests/test.sh` primárně porovnává výstup a neřeší samostatně každý návratový kód skriptu.
+Převzít tento způsob organizace, sdílení zdrojů a samostatného sestavení. Testy TinySSH zůstanou přizpůsobené zdejšímu API, loggeru, licencím a feature detection. Nekopírovat specifické linkovací knihovny ani crypto testy POK; do společného adresáře byly později přesunuty vlastní existující crypto testy TinySSH. Nepřebírat ani případné vady runneru: `pok/tests/test.sh` primárně porovnává výstup a neřeší samostatně každý návratový kód skriptu.
 
 ### Přesun existujících souborů
 
@@ -831,11 +831,11 @@ Názvy při prvním přesunu byly zachovány, aby byl diff snadno kontrolovateln
 | `test-packet-global-request.sh`, `.exp`, `_tinysshd-test-global-request.c` | Stejná jména v `tests/`. |
 | `_tinysshd-test-hello1.c`, `_tinysshd-test-hello2.c`, `_tinysshd-test-kex1.c`, `_tinysshd-test-kex2.c` | Přesun do `tests/`; jejich vypnuté scénáře obnovovat až samostatným krokem. |
 | `_tinysshd-unauthenticated.c`, `_tinysshd-printkex.c` | Přesun do `tests/` jako SSH testovací helpery. |
-| `runtest.sh` | SSH část nahradí `tests/test.sh`; kořenový runner zatím zachovat pro nemigrované testy, které jej stále používají. |
+| `runtest.sh` | Po přesunu všech testů jej nahradil společný `tests/test.sh`; kořenový runner byl odstraněn. |
 | Relevantní scénáře z `old/tinyssh-tests/` | Při jejich obnově portovat přímo do aktivních souborů `tests/`; celý archiv nekopírovat ani automaticky nespouštět. |
 | Produkční `.c`/`.h` potřebné pro sestavení testů | Relativní symlinky `tests/name.c -> ../name.c`, `tests/name.h -> ../name.h`; produkční originály zůstávají v kořeni. |
 
-Původní omezení na SSH nadále platí: `test-crypto*`, jejich includy, makekey/printkey testy a benchmark `_tinysshd-speed.c` se v této etapě nemigrují ani nerozšiřují. Samotná utilita `tinysshd-makekey` se v testovacím buildu může používat k vytvoření SSH fixture; to neznamená spuštění testů generování klíčů.
+Původní SSH etapa nepřesouvala `test-crypto*`, jejich includy ani makekey/printkey testy. Následující konsolidační krok je přesunul beze změny obsahu do `tests/`, aby všechny aktivní testy používaly jediný build a runner. Benchmark `_tinysshd-speed.c` zůstává produkčním pomocným programem v kořeni.
 
 ### Cílová struktura
 
@@ -873,8 +873,8 @@ Jádro sady bude ploché jako v POK; původně navrhovaná samostatná hierarchi
 4. `tests/test.sh` vybírá stabilně seřazené dvojice `.sh`/`.exp` základní SSH sady a explicitně odlišuje integrační či dlouhé scénáře. Samotný runner a generátor se nespouštějí jako testy. Chybějící `.exp` u registrovaného golden testu je chyba, ne tiché přeskočení. Integrační test bez `.exp` má explicitní registraci a kontrolu návratového kódu.
 5. Runner kontroluje **návratový kód skriptu i shodu očekávání**. Očekávané neúspěchy daemonu posuzuje konkrétní skript/harness a při splnění kontraktu sám vrací 0. Normalizace přes `sed` nesmí zakrýt neúspěch předchozí části pipeline. Při nesouladu zachovat `.out` a diagnostiku.
 6. Skripty se spouštějí s pracovním adresářem `tests/`. Upravovat cesty k helperům, binárkám, fixture a referenčním souborům vědomě; nespoléhat na náhodný cwd volajícího. Přímé `sh tests/test.sh` z kořene se má samo přepnout do svého adresáře stejně jako běh přes Makefile.
-7. Kořenový `test-ssh` deleguje `$(MAKE) -C tests test`; `test-ssh-integration` deleguje `$(MAKE) -C tests test-integration`; `test-ssh-fuzz-smoke` deleguje `$(MAKE) -C tests test-fuzz-smoke`. Používat rekurzivní `$(MAKE)`, aby fungovaly build proměnné a jobserver. Integrace není automaticky součástí rychlé sady.
-8. Stávající kořenové `make test` zachová nemigrované testy a přidá jednu delegaci do `tests/`; migrované SSH položky odstranit z kořenového `TESTOUT` a helpery z kořenového `BINARIES`/`OBJALL`. Nevytvořit dvojí spouštění stejného testu. `make test-ssh` a `make -C tests test` jsou čistě SSH vstupy; původní agregát `make test` může nadále zahrnovat crypto a v této práci se nemusí spouštět.
+7. Kořenový `test-ssh` deleguje `$(MAKE) -C tests test-ssh`; `test-ssh-integration` deleguje `$(MAKE) -C tests test-integration`; `test-ssh-fuzz-smoke` deleguje `$(MAKE) -C tests test-fuzz-smoke`. Používat rekurzivní `$(MAKE)`, aby fungovaly build proměnné a jobserver. Integrace není automaticky součástí rychlé sady.
+8. Kořenový `make test` deleguje úplnou sadu do `tests/`; v kořeni nezůstává druhý runner, `TESTOUT` ani testovací binárka. `make test-ssh` deleguje na `make -C tests test-ssh` a nekompiluje ani nespouští `test-crypto`. Nevytvořit dvojí spouštění stejného testu.
 9. Kořenový `clean` deleguje také `$(MAKE) -C tests clean`. Testovací clean odstraní lokální artefakty, nikoli produkční zdroje dosažitelné přes symlinky, `.exp` či corpus. Upravit pravidla ignorování generovaných souborů; neignorovat celou složku `tests/`.
 10. Relativní symlinky evidovat v repozitáři a zkontrolovat v čistém checkoutu. Nevytvářet absolutní odkazy do pracovního prostředí ani kopie produkčního kódu, které by se časem rozešly. Seznam potřebných modulů musí zůstat explicitně kontrolovatelný a nemá automaticky linkovat test-crypto ani všechny programové `main()` do jedné binárky.
 

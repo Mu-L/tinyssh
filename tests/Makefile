@@ -3,12 +3,14 @@ CFLAGS+=-W -Wall -Os -fPIC -fwrapv -I../cryptoint
 LDFLAGS?=
 CPPFLAGS?=
 
-PROGRAMS=_tinysshd-printkex _tinysshd-test-auth-protocol _tinysshd-test-channel-flow _tinysshd-test-channel-protocol _tinysshd-test-global-request _tinysshd-test-hello1 _tinysshd-test-hello2 _tinysshd-test-ignore _tinysshd-test-kex-protocol _tinysshd-test-kex1 _tinysshd-test-kex2 _tinysshd-test-packet _tinysshd-test-rekey-protocol _tinysshd-test-sequence _tinysshd-unauthenticated tinysshd
-LINKS=tinysshd-makekey
+PROGRAMS=_tinysshd-printkex _tinysshd-test-auth-protocol _tinysshd-test-channel-flow _tinysshd-test-channel-protocol _tinysshd-test-global-request _tinysshd-test-hello1 _tinysshd-test-hello2 _tinysshd-test-ignore _tinysshd-test-kex-protocol _tinysshd-test-kex1 _tinysshd-test-kex2 _tinysshd-test-packet _tinysshd-test-rekey-protocol _tinysshd-test-sequence _tinysshd-unauthenticated test-crypto tinysshd
+LINKS=tinysshd-makekey tinysshd-printkey
 OBJECTS= blocking.o buf.o byte.o channel.o channel_drop.o channel_fork.o channel_forkpty.o channel_subsystem.o cleanup.o coe.o connectioninfo.o crypto_dh_x25519.o crypto_hash_sha256.o crypto_hash_sha512_lib25519.o crypto_hash_sha512_tinyssh.o crypto_kem_sntrup761_libntruprime.o crypto_kem_sntrup761_tinyssh.o crypto_kem_sntrup761x25519.o crypto_onetimeauth_poly1305_lib1305.o crypto_onetimeauth_poly1305_tinyssh.o crypto_scalarmult_curve25519.o crypto_sign_ed25519_lib25519.o crypto_sign_ed25519_tinyssh.o crypto_sort_uint32.o crypto_stream_chacha20.o crypto_verify_16.o crypto_verify_32.o die.o dropuidgid.o e.o env.o fe.o fe25519.o ge25519.o getln.o global.o int16_optblocker.o int32_optblocker.o int64_optblocker.o int8_optblocker.o iptostr.o load.o log.o loginshell.o logsys.o main_tinysshd.o main_tinysshd_makekey.o main_tinysshd_printkey.o newenv.o numtostr.o open.o packet.o packet_auth.o packet_channel_open.o packet_channel_recv.o packet_channel_request.o packet_channel_send.o packet_get.o packet_global_request.o packet_hello.o packet_kex.o packet_kexdh.o packet_put.o packet_recv.o packet_send.o packet_unimplemented.o packetparser.o porttostr.o randommod.o readall.o savesync.o sc25519.o ssh.o sshcrypto.o sshcrypto_cipher.o sshcrypto_cipher_chachapoly.o sshcrypto_kex.o sshcrypto_kex_curve25519.o sshcrypto_kex_sntrup761x25519.o sshcrypto_key.o sshcrypto_key_ed25519.o str.o stringparser.o subprocess_auth.o subprocess_sign.o trymlock.o uint16_optblocker.o uint32_optblocker.o uint64_optblocker.o uint8_optblocker.o writeall.o
-ALLOBJECTS= _tinysshd-printkex.o _tinysshd-test-auth-protocol.o _tinysshd-test-channel-flow.o _tinysshd-test-channel-protocol.o _tinysshd-test-global-request.o _tinysshd-test-hello1.o _tinysshd-test-hello2.o _tinysshd-test-ignore.o _tinysshd-test-kex-protocol.o _tinysshd-test-kex1.o _tinysshd-test-kex2.o _tinysshd-test-packet.o _tinysshd-test-rekey-protocol.o _tinysshd-test-sequence.o _tinysshd-unauthenticated.o blocking.o buf.o byte.o channel.o channel_drop.o channel_fork.o channel_forkpty.o channel_subsystem.o cleanup.o coe.o connectioninfo.o crypto_dh_x25519.o crypto_hash_sha256.o crypto_hash_sha512_lib25519.o crypto_hash_sha512_tinyssh.o crypto_kem_sntrup761_libntruprime.o crypto_kem_sntrup761_tinyssh.o crypto_kem_sntrup761x25519.o crypto_onetimeauth_poly1305_lib1305.o crypto_onetimeauth_poly1305_tinyssh.o crypto_scalarmult_curve25519.o crypto_sign_ed25519_lib25519.o crypto_sign_ed25519_tinyssh.o crypto_sort_uint32.o crypto_stream_chacha20.o crypto_verify_16.o crypto_verify_32.o die.o dropuidgid.o e.o env.o fe.o fe25519.o ge25519.o getln.o global.o haslib1305.o haslib25519.o haslibntruprime.o haslibrandombytes.o haslibutilh.o haslimits.o haslogintty.o hasmlock.o hasopenpty.o hasutilh.o hasutmp.o hasutmpaddrv6.o hasutmphost.o hasutmploginlogout.o hasutmplogwtmp.o hasutmpname.o hasutmppid.o hasutmptime.o hasutmptv.o hasutmptype.o hasutmpuser.o hasutmpx.o hasutmpxaddrv6.o hasutmpxsyslen.o hasutmpxupdwtmpx.o hasvalgrind.o int16_optblocker.o int32_optblocker.o int64_optblocker.o int8_optblocker.o iptostr.o load.o log.o loginshell.o logsys.o main_tinysshd.o main_tinysshd_makekey.o main_tinysshd_printkey.o newenv.o numtostr.o open.o packet.o packet_auth.o packet_channel_open.o packet_channel_recv.o packet_channel_request.o packet_channel_send.o packet_get.o packet_global_request.o packet_hello.o packet_kex.o packet_kexdh.o packet_put.o packet_recv.o packet_send.o packet_unimplemented.o packetparser.o porttostr.o randombytes.o randommod.o readall.o savesync.o sc25519.o ssh.o sshcrypto.o sshcrypto_cipher.o sshcrypto_cipher_chachapoly.o sshcrypto_kex.o sshcrypto_kex_curve25519.o sshcrypto_kex_sntrup761x25519.o sshcrypto_key.o sshcrypto_key_ed25519.o str.o stringparser.o subprocess_auth.o subprocess_sign.o tinysshd.o trymlock.o uint16_optblocker.o uint32_optblocker.o uint64_optblocker.o uint8_optblocker.o writeall.o
+ALLOBJECTS= _tinysshd-printkex.o _tinysshd-test-auth-protocol.o _tinysshd-test-channel-flow.o _tinysshd-test-channel-protocol.o _tinysshd-test-global-request.o _tinysshd-test-hello1.o _tinysshd-test-hello2.o _tinysshd-test-ignore.o _tinysshd-test-kex-protocol.o _tinysshd-test-kex1.o _tinysshd-test-kex2.o _tinysshd-test-packet.o _tinysshd-test-rekey-protocol.o _tinysshd-test-sequence.o _tinysshd-unauthenticated.o blocking.o buf.o byte.o channel.o channel_drop.o channel_fork.o channel_forkpty.o channel_subsystem.o cleanup.o coe.o connectioninfo.o crypto_dh_x25519.o crypto_hash_sha256.o crypto_hash_sha512_lib25519.o crypto_hash_sha512_tinyssh.o crypto_kem_sntrup761_libntruprime.o crypto_kem_sntrup761_tinyssh.o crypto_kem_sntrup761x25519.o crypto_onetimeauth_poly1305_lib1305.o crypto_onetimeauth_poly1305_tinyssh.o crypto_scalarmult_curve25519.o crypto_sign_ed25519_lib25519.o crypto_sign_ed25519_tinyssh.o crypto_sort_uint32.o crypto_stream_chacha20.o crypto_verify_16.o crypto_verify_32.o die.o dropuidgid.o e.o env.o fe.o fe25519.o ge25519.o getln.o global.o haslib1305.o haslib25519.o haslibntruprime.o haslibrandombytes.o haslibutilh.o haslimits.o haslogintty.o hasmlock.o hasopenpty.o hasutilh.o hasutmp.o hasutmpaddrv6.o hasutmphost.o hasutmploginlogout.o hasutmplogwtmp.o hasutmpname.o hasutmppid.o hasutmptime.o hasutmptv.o hasutmptype.o hasutmpuser.o hasutmpx.o hasutmpxaddrv6.o hasutmpxsyslen.o hasutmpxupdwtmpx.o hasvalgrind.o int16_optblocker.o int32_optblocker.o int64_optblocker.o int8_optblocker.o iptostr.o load.o log.o loginshell.o logsys.o main_tinysshd.o main_tinysshd_makekey.o main_tinysshd_printkey.o newenv.o numtostr.o open.o packet.o packet_auth.o packet_channel_open.o packet_channel_recv.o packet_channel_request.o packet_channel_send.o packet_get.o packet_global_request.o packet_hello.o packet_kex.o packet_kexdh.o packet_put.o packet_recv.o packet_send.o packet_unimplemented.o packetparser.o porttostr.o randombytes.o randommod.o readall.o savesync.o sc25519.o ssh.o sshcrypto.o sshcrypto_cipher.o sshcrypto_cipher_chachapoly.o sshcrypto_kex.o sshcrypto_kex_curve25519.o sshcrypto_kex_sntrup761x25519.o sshcrypto_key.o sshcrypto_key_ed25519.o str.o stringparser.o subprocess_auth.o subprocess_sign.o test-crypto.o tinysshd.o trymlock.o uint16_optblocker.o uint32_optblocker.o uint64_optblocker.o uint8_optblocker.o writeall.o
 AUTOHEADERS= haslib1305.h haslib25519.h haslibntruprime.h haslibrandombytes.h haslibutilh.h haslimits.h haslogintty.h hasmlock.h hasopenpty.h hasutilh.h hasutmp.h hasutmpaddrv6.h hasutmphost.h hasutmploginlogout.h hasutmplogwtmp.h hasutmpname.h hasutmppid.h hasutmptime.h hasutmptv.h hasutmptype.h hasutmpuser.h hasutmpx.h hasutmpxaddrv6.h hasutmpxsyslen.h hasutmpxupdwtmpx.h hasvalgrind.h
-TESTOUT= test-auth-protocol.out test-channel-flow.out test-channel-protocol.out test-kex-protocol.out test-packet-global-request.out test-packet-protocol.out test-packet-sequence.out test-rekey-protocol.out test-tinysshd-ignore.out test-tinysshd.out
+TESTOUT= test-auth-protocol.out test-channel-flow.out test-channel-protocol.out test-crypto-dh.out test-crypto-hash.out test-crypto-kem.out test-crypto-onetimeauth.out test-crypto-sign.out test-crypto-sort.out test-crypto-verify.out test-kex-protocol.out test-packet-global-request.out test-packet-protocol.out test-packet-sequence.out test-rekey-protocol.out test-tinysshd-ignore.out test-tinysshd-makekey.out test-tinysshd-printkey.out test-tinysshd.out
+TESTS= test-auth-protocol.sh test-channel-flow.sh test-channel-protocol.sh test-crypto-dh.sh test-crypto-hash.sh test-crypto-kem.sh test-crypto-onetimeauth.sh test-crypto-sign.sh test-crypto-sort.sh test-crypto-verify.sh test-kex-protocol.sh test-packet-global-request.sh test-packet-protocol.sh test-packet-sequence.sh test-rekey-protocol.sh test-tinysshd-ignore.sh test-tinysshd-makekey.sh test-tinysshd-printkey.sh test-tinysshd.sh
+SSHTESTS= test-auth-protocol.sh test-channel-flow.sh test-channel-protocol.sh test-kex-protocol.sh test-packet-global-request.sh test-packet-protocol.sh test-packet-sequence.sh test-rekey-protocol.sh test-tinysshd-ignore.sh test-tinysshd.sh
 
 all: $(AUTOHEADERS) $(PROGRAMS) $(LINKS)
 
@@ -942,6 +944,23 @@ subprocess_sign.o: subprocess_sign.c load.h log.h open.h writeall.h \
  crypto_sort_uint32.h crypto_stream_chacha20.h subprocess.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c subprocess_sign.c
 
+test-crypto.o: test-crypto.c ../cryptoint/crypto_uint8.h \
+ ../cryptoint/crypto_uint32.h ../cryptoint/crypto_uint64.h \
+ crypto_declassify.h hasvalgrind.h crypto.h ../cryptoint/crypto_int16.h \
+ ../cryptoint/crypto_int32.h ../cryptoint/crypto_int64.h \
+ ../cryptoint/crypto_int8.h ../cryptoint/crypto_uint16.h \
+ crypto_verify_16.h crypto_verify_32.h haslibrandombytes.h randombytes.h \
+ crypto_hash_sha256.h crypto_hash_sha512.h haslib25519.h \
+ crypto_kem_sntrup761.h haslibntruprime.h crypto_kem_sntrup761x25519.h \
+ crypto_onetimeauth_poly1305.h haslib1305.h \
+ crypto_scalarmult_curve25519.h crypto_dh_x25519.h crypto_sign_ed25519.h \
+ crypto_sort_uint32.h crypto_stream_chacha20.h _crypto-test_verify_16.inc \
+ _crypto-test_verify_32.inc _crypto-test_sort_uint32.inc \
+ _crypto-test_hash_sha256.inc _crypto-test_hash_sha512.inc \
+ _crypto-test_sign_ed25519.inc _crypto-test_kem_sntrup761.inc \
+ _crypto-test_dh_x25519.inc _crypto-test_onetimeauth_poly1305.inc
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c test-crypto.c
+
 tinysshd.o: tinysshd.c str.h main.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c tinysshd.c
 
@@ -1022,6 +1041,10 @@ _tinysshd-test-sequence: _tinysshd-test-sequence.o $(OBJECTS) randombytes.o libs
 _tinysshd-unauthenticated: _tinysshd-unauthenticated.o $(OBJECTS) randombytes.o libs
 	$(CC) $(CFLAGS) $(CPPFLAGS) -o _tinysshd-unauthenticated _tinysshd-unauthenticated.o \
 	$(OBJECTS) $(LDFLAGS) `cat libs` randombytes.o
+
+test-crypto: test-crypto.o $(OBJECTS) libs
+	$(CC) $(CFLAGS) $(CPPFLAGS) -o test-crypto test-crypto.o \
+	$(OBJECTS) $(LDFLAGS) `cat libs`
 
 tinysshd: tinysshd.o $(OBJECTS) randombytes.o libs
 	$(CC) $(CFLAGS) $(CPPFLAGS) -o tinysshd tinysshd.o \
@@ -1169,6 +1192,34 @@ test-channel-protocol.out: $(PROGRAMS) $(LINKS) test-channel-protocol.sh test-ch
 	sh test-channel-protocol.sh >test-channel-protocol.out
 	cmp test-channel-protocol.exp test-channel-protocol.out
 
+test-crypto-dh.out: $(PROGRAMS) $(LINKS) test-crypto-dh.sh test-crypto-dh.exp
+	sh test-crypto-dh.sh >test-crypto-dh.out
+	cmp test-crypto-dh.exp test-crypto-dh.out
+
+test-crypto-hash.out: $(PROGRAMS) $(LINKS) test-crypto-hash.sh test-crypto-hash.exp
+	sh test-crypto-hash.sh >test-crypto-hash.out
+	cmp test-crypto-hash.exp test-crypto-hash.out
+
+test-crypto-kem.out: $(PROGRAMS) $(LINKS) test-crypto-kem.sh test-crypto-kem.exp
+	sh test-crypto-kem.sh >test-crypto-kem.out
+	cmp test-crypto-kem.exp test-crypto-kem.out
+
+test-crypto-onetimeauth.out: $(PROGRAMS) $(LINKS) test-crypto-onetimeauth.sh test-crypto-onetimeauth.exp
+	sh test-crypto-onetimeauth.sh >test-crypto-onetimeauth.out
+	cmp test-crypto-onetimeauth.exp test-crypto-onetimeauth.out
+
+test-crypto-sign.out: $(PROGRAMS) $(LINKS) test-crypto-sign.sh test-crypto-sign.exp
+	sh test-crypto-sign.sh >test-crypto-sign.out
+	cmp test-crypto-sign.exp test-crypto-sign.out
+
+test-crypto-sort.out: $(PROGRAMS) $(LINKS) test-crypto-sort.sh test-crypto-sort.exp
+	sh test-crypto-sort.sh >test-crypto-sort.out
+	cmp test-crypto-sort.exp test-crypto-sort.out
+
+test-crypto-verify.out: $(PROGRAMS) $(LINKS) test-crypto-verify.sh test-crypto-verify.exp
+	sh test-crypto-verify.sh >test-crypto-verify.out
+	cmp test-crypto-verify.exp test-crypto-verify.out
+
 test-kex-protocol.out: $(PROGRAMS) $(LINKS) test-kex-protocol.sh test-kex-protocol.exp
 	sh test-kex-protocol.sh >test-kex-protocol.out
 	cmp test-kex-protocol.exp test-kex-protocol.out
@@ -1193,12 +1244,23 @@ test-tinysshd-ignore.out: $(PROGRAMS) $(LINKS) test-tinysshd-ignore.sh test-tiny
 	sh test-tinysshd-ignore.sh >test-tinysshd-ignore.out
 	cmp test-tinysshd-ignore.exp test-tinysshd-ignore.out
 
+test-tinysshd-makekey.out: $(PROGRAMS) $(LINKS) test-tinysshd-makekey.sh test-tinysshd-makekey.exp
+	sh test-tinysshd-makekey.sh >test-tinysshd-makekey.out
+	cmp test-tinysshd-makekey.exp test-tinysshd-makekey.out
+
+test-tinysshd-printkey.out: $(PROGRAMS) $(LINKS) test-tinysshd-printkey.sh test-tinysshd-printkey.exp
+	sh test-tinysshd-printkey.sh >test-tinysshd-printkey.out
+	cmp test-tinysshd-printkey.exp test-tinysshd-printkey.out
+
 test-tinysshd.out: $(PROGRAMS) $(LINKS) test-tinysshd.sh test-tinysshd.exp
 	sh test-tinysshd.sh >test-tinysshd.out
 	cmp test-tinysshd.exp test-tinysshd.out
 
 test: $(PROGRAMS) $(LINKS)
-	sh test.sh
+	sh test.sh $(TESTS)
+
+test-ssh: $(filter-out test-crypto,$(PROGRAMS)) tinysshd-makekey
+	sh test.sh $(SSHTESTS)
 
 libs: trylibs.sh
 	env CC="$(CC)" ./trylibs.sh -lsocket -lnsl -lutil -lrandombytes -l25519 -l1305 -lntruprime >libs 2>libs.log
@@ -1208,6 +1270,10 @@ tinysshd-makekey: tinysshd
 	rm -f tinysshd-makekey
 	ln -s tinysshd tinysshd-makekey
 
+tinysshd-printkey: tinysshd
+	rm -f tinysshd-printkey
+	ln -s tinysshd tinysshd-printkey
+
 clean:
 	rm -f *.log *.o *.out libs $(PROGRAMS) $(LINKS) $(AUTOHEADERS)
-	rm -rf keydir keydir-ignore
+	rm -rf -- keydir keydir-ignore keydirm keydirp -m -r

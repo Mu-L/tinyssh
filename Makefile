@@ -12,8 +12,6 @@ LINKS=tinysshd-makekey tinysshd-printkey tinysshnoneauthd
 
 BINARIES=_tinysshd-speed tinysshd
 
-TESTCRYPTOBINARIES=test-crypto
-
 OBJLIB=blocking.o buf.o byte.o channel.o channel_drop.o channel_fork.o \
  channel_forkpty.o channel_subsystem.o cleanup.o coe.o connectioninfo.o \
  crypto_dh_x25519.o crypto_hash_sha256.o crypto_hash_sha512_lib25519.o \
@@ -58,8 +56,8 @@ OBJALL=_tinysshd-speed.o blocking.o buf.o byte.o channel.o channel_drop.o \
  sshcrypto_cipher.o sshcrypto_cipher_chachapoly.o sshcrypto_kex.o \
  sshcrypto_kex_curve25519.o sshcrypto_kex_sntrup761x25519.o sshcrypto_key.o \
  sshcrypto_key_ed25519.o str.o stringparser.o subprocess_auth.o \
- subprocess_sign.o test-crypto.o tinysshd.o trymlock.o uint16_optblocker.o \
- uint32_optblocker.o uint64_optblocker.o uint8_optblocker.o writeall.o
+ subprocess_sign.o tinysshd.o trymlock.o uint16_optblocker.o uint32_optblocker.o \
+ uint64_optblocker.o uint8_optblocker.o writeall.o
 
 AUTOHEADERS=haslib1305.h haslib25519.h haslibntruprime.h haslibrandombytes.h \
  haslibutilh.h haslimits.h haslogintty.h hasmlock.h hasopenpty.h hasutilh.h \
@@ -67,10 +65,6 @@ AUTOHEADERS=haslib1305.h haslib25519.h haslibntruprime.h haslibrandombytes.h \
  hasutmpname.h hasutmppid.h hasutmptime.h hasutmptv.h hasutmptype.h \
  hasutmpuser.h hasutmpx.h hasutmpxaddrv6.h hasutmpxsyslen.h hasutmpxupdwtmpx.h \
  hasvalgrind.h
-
-TESTOUT=test-crypto-dh.out test-crypto-hash.out test-crypto-kem.out \
- test-crypto-onetimeauth.out test-crypto-sign.out test-crypto-sort.out \
- test-crypto-verify.out test-tinysshd-makekey.out test-tinysshd-printkey.out
 
 all: $(AUTOHEADERS) $(BINARIES) $(LINKS)
 
@@ -475,7 +469,7 @@ packet_kex.o: packet_kex.c buf.h cryptoint/crypto_uint8.h \
  crypto_scalarmult_curve25519.h crypto_dh_x25519.h crypto_sign_ed25519.h \
  crypto_sort_uint32.h crypto_stream_chacha20.h packetparser.h bug.h \
  global.h e.h log.h packet.h limit.h haslimits.h channel.h iptostr.h \
- porttostr.h
+ porttostr.h str.h stringparser.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c packet_kex.c
 
 packet_kexdh.o: packet_kexdh.c buf.h cryptoint/crypto_uint8.h \
@@ -725,23 +719,6 @@ subprocess_sign.o: subprocess_sign.c load.h log.h open.h writeall.h \
  crypto_sort_uint32.h crypto_stream_chacha20.h subprocess.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c subprocess_sign.c
 
-test-crypto.o: test-crypto.c cryptoint/crypto_uint8.h \
- cryptoint/crypto_uint32.h cryptoint/crypto_uint64.h crypto_declassify.h \
- hasvalgrind.h crypto.h cryptoint/crypto_int16.h cryptoint/crypto_int32.h \
- cryptoint/crypto_int64.h cryptoint/crypto_int8.h \
- cryptoint/crypto_uint16.h crypto_verify_16.h crypto_verify_32.h \
- haslibrandombytes.h randombytes.h crypto_hash_sha256.h \
- crypto_hash_sha512.h haslib25519.h crypto_kem_sntrup761.h \
- haslibntruprime.h crypto_kem_sntrup761x25519.h \
- crypto_onetimeauth_poly1305.h haslib1305.h \
- crypto_scalarmult_curve25519.h crypto_dh_x25519.h crypto_sign_ed25519.h \
- crypto_sort_uint32.h crypto_stream_chacha20.h _crypto-test_verify_16.inc \
- _crypto-test_verify_32.inc _crypto-test_sort_uint32.inc \
- _crypto-test_hash_sha256.inc _crypto-test_hash_sha512.inc \
- _crypto-test_sign_ed25519.inc _crypto-test_kem_sntrup761.inc \
- _crypto-test_dh_x25519.inc _crypto-test_onetimeauth_poly1305.inc
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c test-crypto.c
-
 tinysshd.o: tinysshd.c str.h main.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c tinysshd.c
 
@@ -770,11 +747,6 @@ _tinysshd-speed: _tinysshd-speed.o $(OBJLIB) randombytes.o libs
 tinysshd: tinysshd.o $(OBJLIB) randombytes.o libs
 	$(CC) $(CFLAGS) $(CPPFLAGS) -o tinysshd tinysshd.o \
 	$(OBJLIB) $(LDFLAGS) `cat libs` randombytes.o
-
-
-test-crypto: test-crypto.o $(OBJLIB) libs
-	$(CC) $(CFLAGS) $(CPPFLAGS) -o test-crypto test-crypto.o \
-	$(OBJLIB) $(LDFLAGS) `cat libs`
 
 
 haslib1305.h: tryfeature.sh haslib1305.c libs
@@ -907,38 +879,11 @@ hasvalgrind.h: tryfeature.sh hasvalgrind.c libs
 	./tryfeature.sh hasvalgrind.c >hasvalgrind.h 2>hasvalgrind.log
 	cat hasvalgrind.h
 
-test-crypto-dh.out: $(BINARIES) $(TESTCRYPTOBINARIES) $(LINKS) runtest.sh test-crypto-dh.sh test-crypto-dh.exp
-	sh runtest.sh test-crypto-dh.sh test-crypto-dh.out test-crypto-dh.exp
-
-test-crypto-hash.out: $(BINARIES) $(TESTCRYPTOBINARIES) $(LINKS) runtest.sh test-crypto-hash.sh test-crypto-hash.exp
-	sh runtest.sh test-crypto-hash.sh test-crypto-hash.out test-crypto-hash.exp
-
-test-crypto-kem.out: $(BINARIES) $(TESTCRYPTOBINARIES) $(LINKS) runtest.sh test-crypto-kem.sh test-crypto-kem.exp
-	sh runtest.sh test-crypto-kem.sh test-crypto-kem.out test-crypto-kem.exp
-
-test-crypto-onetimeauth.out: $(BINARIES) $(TESTCRYPTOBINARIES) $(LINKS) runtest.sh test-crypto-onetimeauth.sh test-crypto-onetimeauth.exp
-	sh runtest.sh test-crypto-onetimeauth.sh test-crypto-onetimeauth.out test-crypto-onetimeauth.exp
-
-test-crypto-sign.out: $(BINARIES) $(TESTCRYPTOBINARIES) $(LINKS) runtest.sh test-crypto-sign.sh test-crypto-sign.exp
-	sh runtest.sh test-crypto-sign.sh test-crypto-sign.out test-crypto-sign.exp
-
-test-crypto-sort.out: $(BINARIES) $(TESTCRYPTOBINARIES) $(LINKS) runtest.sh test-crypto-sort.sh test-crypto-sort.exp
-	sh runtest.sh test-crypto-sort.sh test-crypto-sort.out test-crypto-sort.exp
-
-test-crypto-verify.out: $(BINARIES) $(TESTCRYPTOBINARIES) $(LINKS) runtest.sh test-crypto-verify.sh test-crypto-verify.exp
-	sh runtest.sh test-crypto-verify.sh test-crypto-verify.out test-crypto-verify.exp
-
-test-tinysshd-makekey.out: $(BINARIES) $(TESTCRYPTOBINARIES) $(LINKS) runtest.sh test-tinysshd-makekey.sh test-tinysshd-makekey.exp
-	sh runtest.sh test-tinysshd-makekey.sh test-tinysshd-makekey.out test-tinysshd-makekey.exp
-
-test-tinysshd-printkey.out: $(BINARIES) $(TESTCRYPTOBINARIES) $(LINKS) runtest.sh test-tinysshd-printkey.sh test-tinysshd-printkey.exp
-	sh runtest.sh test-tinysshd-printkey.sh test-tinysshd-printkey.out test-tinysshd-printkey.exp
-
-test: $(TESTOUT)
+test:
 	$(MAKE) -C tests test
 
 test-ssh:
-	$(MAKE) -C tests test
+	$(MAKE) -C tests test-ssh
 
 libs: trylibs.sh
 	env CC="$(CC)" ./trylibs.sh -lsocket -lnsl -lutil -lrandombytes -l25519 -l1305 -lntruprime >libs 2>libs.log
@@ -970,5 +915,5 @@ install: $(BINARIES) $(LINKS)
 
 clean:
 	$(MAKE) -C tests clean
-	rm -f *.log libs $(OBJLIB) $(OBJALL) $(BINARIES) $(TESTCRYPTOBINARIES) $(LINKS) $(AUTOHEADERS) $(TESTOUT)
+	rm -f *.log libs $(OBJLIB) $(OBJALL) $(BINARIES) $(LINKS) $(AUTOHEADERS)
 

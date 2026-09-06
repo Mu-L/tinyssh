@@ -3,7 +3,11 @@
 cd "$(dirname "$0")" || exit 111
 
 status=0
-for script in test-*.sh; do
+if test "$#" -eq 0; then
+    set -- test-*.sh
+fi
+
+for script do
     name=${script%.sh}
     expfile=${name}.exp
     outfile=${name}.out
