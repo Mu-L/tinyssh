@@ -1,4 +1,5 @@
 ### 20260905 UNRELEASED
+- Fixed `authorized_keys` path validation to check the opened file and every directory in its canonical path, including symlink targets.
 - Added support for the `sntrup761x25519-sha512` key-exchange algorithm name.
 - Documented the supported SSH algorithms in README.md and tinysshd(8).
 - Expanded SSH protocol tests to cover packet parsing and framing, sequence numbers, key exchange and rekey, authentication, global requests, session channels, flow control and connection shutdown.

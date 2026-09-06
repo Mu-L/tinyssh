@@ -8,6 +8,7 @@ Public domain.
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <pwd.h>
 #include "str.h"
@@ -88,28 +89,55 @@ static void check(uid_t uid, const char *d, const char *f, long long *err) {
         log_d2("auth: path: ok: ", d);
 }
 
-int subprocess_auth_checkpath_(char *path, long long pathlen, uid_t uid) {
+int subprocess_auth_checkpath_(char *path, long long pathlen, uid_t uid,
+                               int fd) {
 
     long long err = 0, j, i;
+    char *real;
+    struct stat fst, st;
 
-    if (pathlen <= 16) return 0;
-    if (!getcwd(path, pathlen)) return 0;
-    for (i = 0; i < pathlen; ++i)
-        if (path[i] == 0) break;
-    if (i == pathlen) return 0;
+    if (fstat(fd, &fst) == -1) return 0;
+    if (!S_ISREG(fst.st_mode) || (fst.st_mode & 022) != 0 ||
+        (fst.st_uid != uid && fst.st_uid != 0))
+        return 0;
 
-    check(uid, path, "authorized_keys", &err);
+    real = realpath("authorized_keys", 0);
+    if (!real) return 0;
+    if (!str_copyn(path, pathlen, real)) {
+        free(real);
+        return 0;
+    }
+    free(real);
 
-    do {
-        check(uid, path, 0, &err);
-        for (j = i; j >= 0; --j) {
-            if (path[j] == '/') {
-                path[j] = 0;
-                i = j;
-                break;
-            }
+    /* realpath() is name-based; tie its result to the open descriptor */
+    if (stat(path, &st) == -1 || st.st_dev != fst.st_dev ||
+        st.st_ino != fst.st_ino)
+        return 0;
+
+    i = str_len(path);
+    for (j = i; j >= 0; --j) {
+        if (path[j] == '/') {
+            path[j] = 0;
+            i = j;
+            break;
         }
-    } while (j > 0);
+    }
+
+    if (i > 0) {
+        do {
+            check(uid, path, 0, &err);
+            for (j = i; j >= 0; --j) {
+                if (path[j] == '/') {
+                    path[j] = 0;
+                    i = j;
+                    break;
+                }
+            }
+        } while (j > 0);
+    }
+
+    check(uid, "/", 0, &err);
+
     return (err == 0);
 }
 
@@ -123,6 +151,13 @@ int subprocess_auth_authorizedkeys_(const char *keyname, const char *key,
     fd = open_read("authorized_keys");
     if (fd == -1) {
         log_w3("auth: unable to open file: ", dir, "/.ssh/authorized_keys");
+        return 0;
+    }
+
+    if (!subprocess_auth_checkpath_(buf, bufmax, geteuid(), fd)) {
+        errno = EACCES;
+        log_w3("auth: unable to read file: ", dir, "/.ssh/authorized_keys");
+        close(fd);
         return 0;
     }
 
@@ -185,8 +220,6 @@ int subprocess_auth(const char *account, const char *keyname, const char *key) {
         }
 
         /* authorization starts here */
-        if (!subprocess_auth_checkpath_((char *) buf, sizeof buf, pw->pw_uid))
-            global_die(111);
         if (!subprocess_auth_authorizedkeys_(keyname, key, pw->pw_dir,
                                              (char *) buf, sizeof buf))
             global_die(111);

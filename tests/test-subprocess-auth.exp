@@ -1,0 +1,7 @@
+--- authorized_keys handling
+descriptor identity: ok
+unsafe file: ok
+fifo: ok
+safe symlink: ok
+unsafe symlink: ok
+root directory: ok
