@@ -127,10 +127,21 @@ if __name__ == "__main__":
         pkssh = p.parse_string("publickey")
         skssh = p.parse_string("secretkeys")
 
+        # parse public key
+        p = Parser(pkssh)
+        pkt = p.parse_string("public-key type")
+        if pkt != b'ssh-ed25519':
+                raise Exception(f"unable to parse OpenSSH key: public-key type={pkt}: not ssh-ed25519 key")
+        outerpk = p.parse_string("public-key")
+        if p.data != b'':
+                raise Exception("unable to parse OpenSSH key: trailing data in public key")
+
         # parse secret key
         p = Parser(skssh)
-        p.parse_num("checkint")
-        p.parse_num("checkint")
+        checkint1 = p.parse_num("checkint")
+        checkint2 = p.parse_num("checkint")
+        if checkint1 != checkint2:
+                raise Exception("unable to parse OpenSSH key: checkints don't match")
         sk = []
         t = p.parse_string("secret-key type")
         if t != b'ssh-ed25519':
@@ -144,6 +155,10 @@ if __name__ == "__main__":
                 raise Exception(f"unable to parse OpenSSH key: public-key length={pklen}: not 32")
         if sklen != 64:
                 raise Exception(f"unable to parse OpenSSH key: secret-key length={sklen}: not 64")
+        if outerpk != pk:
+                raise Exception("unable to parse OpenSSH key: public keys don't match")
+        if sk[32:] != pk:
+                raise Exception("unable to parse OpenSSH key: public and secret keys don't match")
 
         os.umask(0o0022)
         os.mkdir(d)
