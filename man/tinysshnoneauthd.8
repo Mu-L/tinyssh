@@ -9,9 +9,12 @@ tinysshnoneauthd \- Tiny SSH daemon with 'none' auth. enabled
 .B tinysshnoneauthd
 creates encrypted (but not authenticated) SSH connection.
 It's used to protect older protocols which uses e.g. telnet etc.
-The client must request the account under which
+The client must request an existing account whose UID matches the effective UID
+under which
 .B tinysshnoneauthd
 is running.
+To accept multiple account names, each name must resolve through the system
+account database to this same UID.
 .SH OPTIONS
 .TP
 .B \-q
