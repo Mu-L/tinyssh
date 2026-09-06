@@ -31,10 +31,11 @@ static int getch(int fd, char *x) {
 }
 
 /*
-The function 'getln' reads line from filedescriptor 'fd' into
-buffer 'xv' of length 'xmax'.
+The function 'getln_' reads line from filedescriptor 'fd' into
+buffer 'xv' of length 'xmax'.  A NUL byte is rejected unless
+'nul_as_newline' is set, in which case it terminates the line.
 */
-int getln(int fd, void *xv, long long xmax) {
+static int getln_(int fd, void *xv, long long xmax, int nul_as_newline) {
 
     long long xlen;
     int r;
@@ -61,13 +62,24 @@ int getln(int fd, void *xv, long long xmax) {
         r = getch(fd, &ch);
         if (r != 1) break;
         if (ch == 0) {
-            x[xlen] = 0;
-            errno = EPROTO;
-            return -1;
+            if (!nul_as_newline) {
+                x[xlen] = 0;
+                errno = EPROTO;
+                return -1;
+            }
+            ch = '\n';
         }
         x[xlen++] = ch;
         if (ch == '\n') break;
     }
     x[xlen] = 0;
     return r;
+}
+
+int getln(int fd, void *xv, long long xmax) {
+    return getln_(fd, xv, xmax, 0);
+}
+
+int getln_nul_as_newline(int fd, void *xv, long long xmax) {
+    return getln_(fd, xv, xmax, 1);
 }

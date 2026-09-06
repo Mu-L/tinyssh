@@ -206,7 +206,8 @@ _tinysshd-test-sequence.o: _tinysshd-test-sequence.c buf.h \
  channel.h iptostr.h porttostr.h ssh.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c _tinysshd-test-sequence.c
 
-_tinysshd-test-subprocess-auth.o: _tinysshd-test-subprocess-auth.c log.h
+_tinysshd-test-subprocess-auth.o: _tinysshd-test-subprocess-auth.c e.h \
+ getln.h log.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c _tinysshd-test-subprocess-auth.c
 
 _tinysshd-unauthenticated.o: _tinysshd-unauthenticated.c log.h packet.h \

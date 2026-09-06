@@ -10,6 +10,8 @@ Public domain.
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include "e.h"
+#include "getln.h"
 #include "log.h"
 
 extern int subprocess_auth_checkpath_(char *, long long, uid_t, int);
@@ -121,6 +123,47 @@ static int unsafe_symlink(void) {
     return ok;
 }
 
+static int nul_before_key(void) {
+    static const char contents[] =
+        "# comment\0ignored\nssh-ed25519 testkey\n";
+    int ok;
+
+    if (!save(contents, sizeof contents - 1, 0600)) return 0;
+    ok = authorized();
+    if (unlink("authorized_keys") == -1) return 0;
+    return ok;
+}
+
+static int key_before_nul(void) {
+    static const char contents[] = "ssh-ed25519 testkey\0ignored\n";
+    int ok;
+
+    if (!save(contents, sizeof contents - 1, 0600)) return 0;
+    ok = authorized();
+    if (unlink("authorized_keys") == -1) return 0;
+    return ok;
+}
+
+static int strict_nul(void) {
+    static const char contents[] = "SSH-2.0-test\0ignored\n";
+    char line[64];
+    int p[2];
+    int r;
+
+    if (pipe(p) == -1) return 0;
+    if (write(p[1], contents, sizeof contents - 1) !=
+        (ssize_t) (sizeof contents - 1)) {
+        close(p[0]);
+        close(p[1]);
+        return 0;
+    }
+    close(p[1]);
+    errno = 0;
+    r = getln(p[0], line, sizeof line);
+    close(p[0]);
+    return r == -1 && errno == EPROTO;
+}
+
 static int root_checked(void) {
     static const char contents[] = "ssh-ed25519 otherkey\n";
     char logs[16384];
@@ -166,6 +209,9 @@ int main(void) {
     ok &= result("fifo", fifo());
     ok &= result("safe symlink", safe_symlink());
     ok &= result("unsafe symlink", unsafe_symlink());
+    ok &= result("NUL before key", nul_before_key());
+    ok &= result("key before NUL", key_before_nul());
+    ok &= result("strict NUL", strict_nul());
     ok &= result("root directory", root_checked());
 
     if (chdir("..") == -1 || rmdir(dir) == -1) return 111;
