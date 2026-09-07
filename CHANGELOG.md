@@ -1,5 +1,6 @@
 ### UNRELEASED
 - Preserved the initial SSH session identifier length across rekeys that switch between key-exchange hash algorithms of different lengths.
+- Sent SSH disconnect messages for unavailable authentication services and unexpected connection-layer messages received before authentication.
 
 ### 20260906 (pre-release)
 - tinyssh-convert: reject inconsistent Ed25519 key material in OpenSSH private-key files.
