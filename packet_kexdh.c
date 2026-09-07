@@ -68,8 +68,13 @@ int packet_kexdh(const char *keydir, struct buf *b1, struct buf *b2) {
     sshcrypto_hash(hash, packet.hashbuf.buf, packet.hashbuf.len);
 
     /* session id */
-    if (!packet.flagrekeying)
+    if (!packet.flagrekeying) {
         byte_copy(packet.sessionid, sshcrypto_hash_bytes, hash);
+        packet.sessionid_len = sshcrypto_hash_bytes;
+    }
+    if (packet.sessionid_len <= 0 ||
+        packet.sessionid_len > (long long) sizeof packet.sessionid)
+        bug_proto();
     packet.flagrekeying = 1;
 
     /* signature */
@@ -110,7 +115,7 @@ int packet_kexdh(const char *keydir, struct buf *b1, struct buf *b2) {
         sshcrypto_buf_putkemkey(b1, sharedsecret);
         buf_put(b1, hash, sshcrypto_hash_bytes);
         buf_putnum8(b1, 'A' + i);
-        buf_put(b1, packet.sessionid, sshcrypto_hash_bytes);
+        buf_put(b1, packet.sessionid, packet.sessionid_len);
         sshcrypto_hash(key, b1->buf, b1->len);
 
         /* one extend */

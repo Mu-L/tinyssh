@@ -44,6 +44,7 @@ struct packet {
     unsigned char servernonce[sshcrypto_cipher_KEYMAX];
     unsigned char clientnonce[sshcrypto_cipher_KEYMAX];
     unsigned char sessionid[sshcrypto_hash_MAX];
+    long long sessionid_len; /* length of the first exchange hash */
     char name[LOGIN_NAME_MAX + 1];
     crypto_uint8 kex_packet_follows;
     crypto_uint8 kex_guess;

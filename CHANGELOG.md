@@ -1,3 +1,6 @@
+### UNRELEASED
+- Preserved the initial SSH session identifier length across rekeys that switch between key-exchange hash algorithms of different lengths.
+
 ### 20260906 (pre-release)
 - tinyssh-convert: reject inconsistent Ed25519 key material in OpenSSH private-key files.
 - Fixed `authorized_keys` path validation to check the opened file and every directory in its canonical path, including symlink targets.

@@ -158,7 +158,7 @@ int packet_auth(struct buf *b, struct buf *b2, int flagnoneauth) {
                 /* authenticate user - verify signature */
                 buf_purge(b2);
                 buf_put(b2, sig, sign_bytes);
-                buf_putstringlen(b2, packet.sessionid, sshcrypto_hash_bytes);
+                buf_putstringlen(b2, packet.sessionid, packet.sessionid_len);
                 buf_put(b2, b->buf, b->len);
 
                 buf_purge(b);
