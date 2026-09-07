@@ -138,11 +138,11 @@ int main_tinysshd(int argc, char **argv, const char *binaryname) {
             }
             if (*x == 'x') {
                 if (x[1]) {
-                    channel_subsystem_add(x + 1);
+                    if (!channel_subsystem_add(x + 1)) die_usage(usage);
                     break;
                 }
                 if (argv[1]) {
-                    channel_subsystem_add(*++argv);
+                    if (!channel_subsystem_add(*++argv)) die_usage(usage);
                     break;
                 }
             }

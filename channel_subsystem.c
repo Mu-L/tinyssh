@@ -15,6 +15,11 @@ static const char *channel_subsystem[CHANNEL_SUBSYSTEM_MAX] = {0};
 
 int channel_subsystem_add(const char *x) {
 
+    const char *separator;
+
+    if (!x || !*x) return 0;
+    for (separator = x; *separator && *separator != '='; ++separator) {}
+    if (separator == x || *separator != '=' || !separator[1]) return 0;
     if (channel_subsystem_pos >= CHANNEL_SUBSYSTEM_MAX) return 0;
     channel_subsystem[channel_subsystem_pos++] = x;
     return 1;
