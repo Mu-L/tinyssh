@@ -55,6 +55,12 @@ static void disconnectpacket(void) {
     appendframe();
 }
 
+static void message(unsigned char ch) {
+    buf_purge(&payload);
+    buf_putnum8(&payload, ch);
+    appendframe();
+}
+
 static int waitstatus(pid_t pid, int expected) {
     int status;
 
@@ -175,10 +181,43 @@ static int malformed(enum malformed_mode mode) {
                  mode == BAD_AUTH_SERVICE ? "ssh-userauth" : "ssh-connection",
                  "none", mode == NONE_TRAILING);
         }
-        packet_auth(&b1, &b2, mode == NUL_USER || mode == NONE_TRAILING);
+        {
+            int ret = packet_auth(&b1, &b2,
+                                  mode == NUL_USER || mode == NONE_TRAILING);
+
+            if (mode == BAD_SERVICE) {
+                if (ret || packet.sendpacketid != 1 ||
+                    packet.receivepacketid != 1)
+                    _exit(100);
+            }
+        }
         _exit(0);
     }
-    return waitstatus(pid, 111);
+    return waitstatus(pid, mode == BAD_SERVICE ? 0 : 111);
+}
+
+static int unexpected(unsigned char ch, int afterservice, int disconnect) {
+    unsigned char space1[GLOBAL_BSIZE];
+    unsigned char space2[GLOBAL_BSIZE];
+    struct buf b1, b2;
+    pid_t pid = fork();
+
+    if (pid == -1) return 0;
+    if (pid == 0) {
+        crypto_uint32 expectedpackets = afterservice + 1;
+        int ret;
+
+        childinit(&b1, space1, &b2, space2);
+        if (afterservice) service("ssh-userauth", 0);
+        message(ch);
+        ret = packet_auth(&b1, &b2, 0);
+        if (!disconnect) _exit(100);
+        if (ret || packet.sendpacketid != expectedpackets ||
+            packet.receivepacketid != expectedpackets)
+            _exit(101);
+        _exit(0);
+    }
+    return waitstatus(pid, disconnect ? 0 : 111);
 }
 
 static int attemptlimit(void) {
@@ -222,6 +261,10 @@ int main(void) {
     if (!malformed(TRUNCATED_AUTH)) ok = 0;
     if (!malformed(NUL_USER)) ok = 0;
     if (!malformed(NONE_TRAILING)) ok = 0;
+    if (!unexpected(SSH_MSG_CHANNEL_OPEN, 0, 1)) ok = 0;
+    if (!unexpected(SSH_MSG_CHANNEL_OPEN, 1, 1)) ok = 0;
+    if (!unexpected(SSH_MSG_KEXINIT, 0, 0)) ok = 0;
+    if (!unexpected(SSH_MSG_KEXINIT, 1, 0)) ok = 0;
     if (!attemptlimit()) ok = 0;
     return ok ? 0 : 111;
 }

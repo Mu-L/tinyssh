@@ -18,6 +18,18 @@ Public domain.
 #include "log.h"
 #include "packet.h"
 
+static int packet_disconnect_(struct buf *b, crypto_uint32 reason,
+                              const char *description) {
+
+    buf_purge(b);
+    buf_putnum8(b, SSH_MSG_DISCONNECT);
+    buf_putnum32(b, reason);
+    buf_putstring(b, description);
+    buf_putstring(b, "");
+    packet_put(b);
+    return packet_sendall();
+}
+
 int packet_auth(struct buf *b, struct buf *b2, int flagnoneauth) {
 
     crypto_uint8 ch, flagsignature;
@@ -40,15 +52,25 @@ int packet_auth(struct buf *b, struct buf *b2, int flagnoneauth) {
 
     /* parse "ssh-userauth" */
     pos = 0;
-    if (!packet_getall(b, SSH_MSG_SERVICE_REQUEST)) return 0;
+    if (!packet_getall(b, 0)) return 0;
     pos = packetparser_uint8(b->buf, b->len, pos,
                              &ch); /* SSH_MSG_SERVICE_REQUEST */
-    if (ch != SSH_MSG_SERVICE_REQUEST) bug_proto();
+    if (ch != SSH_MSG_SERVICE_REQUEST) {
+        /* RFC 4252 section 6 reserves messages 80 and above for use after
+           authentication; receiving one before authentication is an error. */
+        if (ch < SSH_MSG_GLOBAL_REQUEST) bug_proto();
+        packet_disconnect_(b2, SSH_DISCONNECT_PROTOCOL_ERROR,
+                           "unexpected message before authentication");
+        return 0;
+    }
     pos = packetparser_uint32(b->buf, b->len, pos, &len); /* "ssh-userauth" */
     pos = packetparser_skip(b->buf, b->len, pos, len);
-    if (!str_equaln((char *) b->buf + pos - len, len, "ssh-userauth"))
-        bug_proto();
     pos = packetparser_end(b->buf, b->len, pos);
+    if (!str_equaln((char *) b->buf + pos - len, len, "ssh-userauth")) {
+        packet_disconnect_(b2, SSH_DISCONNECT_SERVICE_NOT_AVAILABLE,
+                           "service not available");
+        return 0;
+    }
 
     /* send service accept */
     b->buf[0] = SSH_MSG_SERVICE_ACCEPT;
@@ -60,10 +82,17 @@ int packet_auth(struct buf *b, struct buf *b2, int flagnoneauth) {
         pkname = "unknown";
         pos = 0;
         buf_purge(b);
-        if (!packet_getall(b, SSH_MSG_USERAUTH_REQUEST)) return 0;
+        if (!packet_getall(b, 0)) return 0;
         pos = packetparser_uint8(b->buf, b->len, pos,
                                  &ch); /* SSH_MSG_USERAUTH_REQUEST */
-        if (ch != SSH_MSG_USERAUTH_REQUEST) bug_proto();
+        if (ch != SSH_MSG_USERAUTH_REQUEST) {
+            /* RFC 4252 section 6 reserves messages 80 and above for use after
+               authentication; receiving one before authentication is an error. */
+            if (ch < SSH_MSG_GLOBAL_REQUEST) bug_proto();
+            packet_disconnect_(b2, SSH_DISCONNECT_PROTOCOL_ERROR,
+                               "unexpected message before authentication");
+            return 0;
+        }
         pos = packetparser_uint32(b->buf, b->len, pos, &len); /* name */
         if (len >= sizeof packet.name) bug_proto();
         for (i = 0; i < len; ++i)
