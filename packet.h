@@ -15,8 +15,11 @@ Public domain.
 #include "channel.h"
 
 #define PACKET_UNAUTHENTICATED_MESSAGES 30
-#define PACKET_LIMIT 32768
-#define PACKET_FULLLIMIT 35000
+/* Maximum number of data bytes in one SSH channel data message. */
+#define CHANNEL_PACKET_LIMIT 32768
+
+/* RFC 4253 section 6.1 maximum complete transport packet on the wire. */
+#define TRANSPORT_PACKET_LIMIT 35000
 
 #define PACKET_ZEROBYTES 64
 
@@ -62,8 +65,9 @@ struct packet {
     struct buf hashbuf;
 
     /* send/recv */
-    unsigned char recvbufspace[4 * PACKET_FULLLIMIT + 1 + PACKET_ZEROBYTES];
-    unsigned char sendbufspace[4 * PACKET_FULLLIMIT + 1];
+    unsigned char
+        recvbufspace[4 * TRANSPORT_PACKET_LIMIT + 1 + PACKET_ZEROBYTES];
+    unsigned char sendbufspace[4 * TRANSPORT_PACKET_LIMIT + 1];
     struct buf recvbuf;
     struct buf sendbuf;
     crypto_uint32 packet_length;

@@ -13,7 +13,7 @@ Public domain.
 
 int packet_recvisready(void) {
 
-    return buf_ready(&packet.recvbuf, PACKET_FULLLIMIT);
+    return buf_ready(&packet.recvbuf, TRANSPORT_PACKET_LIMIT);
 }
 
 int packet_recv(void) {
@@ -27,7 +27,7 @@ int packet_recv(void) {
     }
     if (!packet_recvisready()) return 1;
 
-    r = read(0, b->buf + b->len, PACKET_FULLLIMIT);
+    r = read(0, b->buf + b->len, TRANSPORT_PACKET_LIMIT);
     if (r == 0) {
         errno = ECONNRESET;
         return 0;

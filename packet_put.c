@@ -36,7 +36,7 @@ static void packet_put_plain_(struct buf *b) {
 
 int packet_putisready(void) {
 
-    return buf_ready(&packet.sendbuf, PACKET_FULLLIMIT);
+    return buf_ready(&packet.sendbuf, TRANSPORT_PACKET_LIMIT);
 }
 
 void packet_put(struct buf *b) {

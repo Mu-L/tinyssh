@@ -13,7 +13,7 @@ Public domain.
 #include "packetparser.h"
 #include "ssh.h"
 
-static unsigned char outspace[PACKET_FULLLIMIT];
+static unsigned char outspace[TRANSPORT_PACKET_LIMIT];
 static struct buf out;
 
 static int mustfail(void (*fn)(void)) {
@@ -140,12 +140,36 @@ static int framemultiple(void) {
 }
 
 static int frameboundary(void) {
-    static unsigned char payload[PACKET_LIMIT - 5];
+    static unsigned char payload[CHANNEL_PACKET_LIMIT];
 
     payload[0] = SSH_MSG_UNIMPLEMENTED;
     prepare(payload, sizeof payload, 4);
     if (!packet_get(&out, 0)) return 0;
     return out.len == sizeof payload && packet.receivepacketid == 1;
+}
+
+static int encryptedchannelboundary(void) {
+    static unsigned char payload[CHANNEL_PACKET_LIMIT + 9];
+    static const unsigned char cipher[] = "chacha20-poly1305@openssh.com";
+
+    packet_init();
+    sshcrypto_ciphers[0].flagenabled = 1;
+    if (!sshcrypto_cipher_select(cipher, sizeof cipher - 1)) return 0;
+    packet.flagkeys = 1;
+    payload[0] = SSH_MSG_CHANNEL_DATA;
+    crypto_uint32_store_bigendian(payload + 5, CHANNEL_PACKET_LIMIT);
+
+    buf_purge(&out);
+    buf_put(&out, payload, sizeof payload);
+    packet_put(&out);
+    if (packet.sendbuf.len <= CHANNEL_PACKET_LIMIT) return 0;
+
+    packet.recvbuf.len = PACKET_ZEROBYTES;
+    buf_put(&packet.recvbuf, packet.sendbuf.buf, packet.sendbuf.len);
+    buf_purge(&out);
+    if (!packet_get(&out, 0)) return 0;
+    return out.len == sizeof payload && out.buf[0] == SSH_MSG_CHANNEL_DATA &&
+           packet.receivepacketid == 1;
 }
 
 static int putvalid(void) {
@@ -194,7 +218,7 @@ static void packettoolarge(void) {
     packet_init();
     packet.recvbuf.len = PACKET_ZEROBYTES + 4;
     x = packet.recvbuf.buf + PACKET_ZEROBYTES;
-    crypto_uint32_store_bigendian(x, PACKET_LIMIT + 1);
+    crypto_uint32_store_bigendian(x, TRANSPORT_PACKET_LIMIT - 4 + 1);
     packet_get(&out, 0);
 }
 
@@ -213,6 +237,7 @@ int main(void) {
     if (!framefragmented()) ok = 0;
     if (!framemultiple()) ok = 0;
     if (!frameboundary()) ok = 0;
+    if (!encryptedchannelboundary()) ok = 0;
     if (!putvalid()) ok = 0;
     if (!mustfail(paddingzero)) ok = 0;
     if (!mustfail(paddingthree)) ok = 0;

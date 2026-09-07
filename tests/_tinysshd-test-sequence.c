@@ -13,7 +13,7 @@ Public domain.
 #include "ssh.h"
 #include "sshcrypto.h"
 
-static unsigned char outspace[PACKET_FULLLIMIT];
+static unsigned char outspace[TRANSPORT_PACKET_LIMIT];
 static struct buf out;
 
 static long long putplain(long long pos, const unsigned char *payload,

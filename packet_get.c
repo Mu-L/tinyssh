@@ -33,12 +33,12 @@ static int packet_get_plain_(struct buf *b) {
 
     /* parse length */
     packet_length = crypto_uint32_load_bigendian(pp);
-    if (packet_length > PACKET_LIMIT) {
+    if (packet_length > TRANSPORT_PACKET_LIMIT - 4) {
         char buf1[NUMTOSTR_LEN];
         char buf2[NUMTOSTR_LEN];
         errno = EPROTO;
-        log_f4("packet length ", numtostr(buf1, packet_length),
-               " > PACKET_LIMIT ", numtostr(buf2, PACKET_LIMIT));
+        log_f4("packet length ", numtostr(buf1, packet_length), " > maximum ",
+               numtostr(buf2, TRANSPORT_PACKET_LIMIT - 4));
         global_die(111);
     }
     if (packet_length + 4 > l) return 1;

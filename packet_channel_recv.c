@@ -24,6 +24,7 @@ int packet_channel_recv_data(struct buf *b) {
                               &id); /* uint32    recipient channel    */
     if (id != channel_getid()) bug_proto();
     pos = packetparser_uint32(b->buf, b->len, pos, &len); /* string    data */
+    if (len > CHANNEL_PACKET_LIMIT) bug_proto();
     pos = packetparser_skip(b->buf, b->len, pos, len);
     pos = packetparser_end(b->buf, b->len, pos);
 
@@ -47,6 +48,7 @@ int packet_channel_recv_extendeddata(struct buf *b) {
     pos = packetparser_uint32(b->buf, b->len, pos,
                               &type); /* uint32 data type code */
     pos = packetparser_uint32(b->buf, b->len, pos, &len); /* string data */
+    if (len > CHANNEL_PACKET_LIMIT) bug_proto();
     pos = packetparser_skip(b->buf, b->len, pos, len);
     pos = packetparser_end(b->buf, b->len, pos);
 

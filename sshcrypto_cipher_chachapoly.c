@@ -93,7 +93,8 @@ int chachapoly_packet_get(struct buf *b) {
         packet.packet_length = crypto_uint32_load_bigendian(buf);
     }
 
-    if (packet.packet_length > PACKET_LIMIT) bug_proto();
+    /* packet_length excludes its 4-byte field and the authentication tag. */
+    if (packet.packet_length > TRANSPORT_PACKET_LIMIT - 4 - AB) bug_proto();
     if (packet.packet_length + AB + 4 > recvbuf->len - PACKET_ZEROBYTES)
         return 1;
 

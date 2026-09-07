@@ -14,7 +14,7 @@ Public domain.
 #include "packet.h"
 #include "ssh.h"
 
-static unsigned char space[PACKET_FULLLIMIT + 1];
+static unsigned char space[TRANSPORT_PACKET_LIMIT + 1];
 static struct buf b;
 
 static void reset(crypto_uint32 window, long long pid) {
@@ -65,6 +65,59 @@ static int receiveextended(void) {
     datarequest(SSH_MSG_CHANNEL_EXTENDED_DATA, 42, 1, text, sizeof text - 1, 0);
     if (!packet_channel_recv_extendeddata(&b)) return 0;
     return channel.len0 == 0 && channel.localwindow == 94 && b.len == 0;
+}
+
+static int receivepacketlimit(void) {
+    static const unsigned char data[CHANNEL_PACKET_LIMIT];
+
+    reset(CHANNEL_BUFSIZE, 1);
+    channel.fd0 = 0;
+    datarequest(SSH_MSG_CHANNEL_DATA, 42, 0, data, sizeof data, 0);
+    if (!packet_channel_recv_data(&b)) return 0;
+    if (channel.len0 != CHANNEL_PACKET_LIMIT ||
+        channel.localwindow != CHANNEL_BUFSIZE - CHANNEL_PACKET_LIMIT)
+        return 0;
+
+    reset(CHANNEL_BUFSIZE, 1);
+    datarequest(SSH_MSG_CHANNEL_EXTENDED_DATA, 42, 1, data, sizeof data, 0);
+    if (!packet_channel_recv_extendeddata(&b)) return 0;
+    return channel.localwindow == CHANNEL_BUFSIZE - CHANNEL_PACKET_LIMIT;
+}
+
+static int senddatalimit(void) {
+    static unsigned char data[100];
+    int p[2];
+
+    reset(100, 1);
+    channel.maxpacket = 32;
+    if (pipe(p) == -1) return 0;
+    if (write(p[1], data, sizeof data) != (long long) sizeof data) return 0;
+    close(p[1]);
+    channel.fd1 = p[0];
+    packet_channel_send_data(&b);
+    close(channel.fd1);
+    channel.fd1 = -1;
+    return packet.sendbuf.buf[5] == SSH_MSG_CHANNEL_DATA &&
+           crypto_uint32_load_bigendian(packet.sendbuf.buf + 10) == 32 &&
+           channel.remotewindow == 68;
+}
+
+static int sendextendedlimit(void) {
+    static unsigned char data[100];
+    int p[2];
+
+    reset(100, 1);
+    channel.maxpacket = 32;
+    if (pipe(p) == -1) return 0;
+    if (write(p[1], data, sizeof data) != (long long) sizeof data) return 0;
+    close(p[1]);
+    channel.fd2 = p[0];
+    packet_channel_send_extendeddata(&b);
+    close(channel.fd2);
+    channel.fd2 = -1;
+    return packet.sendbuf.buf[5] == SSH_MSG_CHANNEL_EXTENDED_DATA &&
+           crypto_uint32_load_bigendian(packet.sendbuf.buf + 14) == 32 &&
+           channel.remotewindow == 68;
 }
 
 static int windowadjust(void) {
@@ -132,8 +185,10 @@ enum fatalmode {
     DATA_WINDOW,
     DATA_ID,
     DATA_TRAILING,
+    DATA_PACKET_LIMIT,
     EXTENDED_WINDOW,
     EXTENDED_TRUNCATED,
+    EXTENDED_PACKET_LIMIT,
     WINDOW_OVERFLOW,
     EOF_ID,
     CLOSE_TRAILING
@@ -141,6 +196,7 @@ enum fatalmode {
 
 static int fatal(enum fatalmode mode) {
     static const unsigned char text[] = "0123456789";
+    static const unsigned char large[CHANNEL_PACKET_LIMIT + 1];
     int status;
     pid_t pid = fork();
 
@@ -154,10 +210,21 @@ static int fatal(enum fatalmode mode) {
                         text, sizeof text - 1, mode == DATA_TRAILING);
             packet_channel_recv_data(&b);
         }
+        if (mode == DATA_PACKET_LIMIT) {
+            reset(CHANNEL_BUFSIZE, 1);
+            datarequest(SSH_MSG_CHANNEL_DATA, 42, 0, large, sizeof large, 0);
+            packet_channel_recv_data(&b);
+        }
         if (mode == EXTENDED_WINDOW || mode == EXTENDED_TRUNCATED) {
             datarequest(SSH_MSG_CHANNEL_EXTENDED_DATA, 42, 1, text,
                         sizeof text - 1, 0);
             if (mode == EXTENDED_TRUNCATED) --b.len;
+            packet_channel_recv_extendeddata(&b);
+        }
+        if (mode == EXTENDED_PACKET_LIMIT) {
+            reset(CHANNEL_BUFSIZE, 1);
+            datarequest(SSH_MSG_CHANNEL_EXTENDED_DATA, 42, 1, large,
+                        sizeof large, 0);
             packet_channel_recv_extendeddata(&b);
         }
         if (mode == WINDOW_OVERFLOW) {
@@ -214,14 +281,19 @@ int main(void) {
     buf_init(&b, space, sizeof space);
     if (!receivedata()) ok = 0;
     if (!receiveextended()) ok = 0;
+    if (!receivepacketlimit()) ok = 0;
+    if (!senddatalimit()) ok = 0;
+    if (!sendextendedlimit()) ok = 0;
     if (!windowadjust()) ok = 0;
     if (!sendwindowadjust()) ok = 0;
     if (!eofandclose()) ok = 0;
     if (!fatal(DATA_WINDOW)) ok = 0;
     if (!fatal(DATA_ID)) ok = 0;
     if (!fatal(DATA_TRAILING)) ok = 0;
+    if (!fatal(DATA_PACKET_LIMIT)) ok = 0;
     if (!fatal(EXTENDED_WINDOW)) ok = 0;
     if (!fatal(EXTENDED_TRUNCATED)) ok = 0;
+    if (!fatal(EXTENDED_PACKET_LIMIT)) ok = 0;
     if (!fatal(WINDOW_OVERFLOW)) ok = 0;
     if (!fatal(EOF_ID)) ok = 0;
     if (!fatal(CLOSE_TRAILING)) ok = 0;

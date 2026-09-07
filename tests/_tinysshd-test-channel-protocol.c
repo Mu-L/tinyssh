@@ -58,11 +58,11 @@ static int opentests(void) {
     if (load32(packet.sendbuf.buf + 6) != 42 ||
         load32(packet.sendbuf.buf + 10) != 42 ||
         load32(packet.sendbuf.buf + 14) != CHANNEL_BUFSIZE ||
-        load32(packet.sendbuf.buf + 18) != PACKET_LIMIT / 2)
+        load32(packet.sendbuf.buf + 18) != CHANNEL_PACKET_LIMIT)
         return 0;
 
     buf_purge(&packet.sendbuf);
-    openrequest("session", 99, 1, PACKET_LIMIT + 100, 0);
+    openrequest("session", 99, 1, CHANNEL_PACKET_LIMIT + 100, 0);
     if (!packet_channel_open(&b1, &b2)) return 0;
     if (!replytype(SSH_MSG_CHANNEL_OPEN_FAILURE)) return 0;
     if (load32(packet.sendbuf.buf + 6) != 99 ||
