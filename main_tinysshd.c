@@ -51,9 +51,11 @@ static void timeout(int x) {
 static int selfpipe[2] = {-1, -1};
 
 static void trigger(int x) {
-    errno = 0;
+    int saved_errno = errno;
+
     x = write(selfpipe[1], "", 1);
     (void) x;
+    errno = saved_errno;
 }
 
 int main_tinysshd(int argc, char **argv, const char *binaryname) {

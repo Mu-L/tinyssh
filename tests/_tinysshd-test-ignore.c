@@ -2,7 +2,6 @@
 20260905
 */
 
-#include <signal.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -11,6 +10,7 @@
 #include "packet.h"
 #include "ssh.h"
 #include "str.h"
+#include "sig.h"
 
 static unsigned char bspace[1024];
 static struct buf b;
@@ -124,7 +124,7 @@ int main(int argc, char **argv) {
     if (dup2(tochild[1], 1) == -1) _exit(111);
     close(fromchild[0]);
     close(tochild[1]);
-    signal(SIGPIPE, SIG_IGN);
+    sig_ignore(SIGPIPE);
 
     global_init();
     buf_init(&b, bspace, sizeof bspace);

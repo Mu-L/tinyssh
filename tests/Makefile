@@ -3,7 +3,7 @@ CFLAGS+=-W -Wall -Os -fPIC -fwrapv -I../cryptoint
 LDFLAGS?=
 CPPFLAGS?=
 
-PROGRAMS=_tinysshd-printkex _tinysshd-test-auth-protocol _tinysshd-test-channel-flow _tinysshd-test-channel-protocol _tinysshd-test-global-request _tinysshd-test-hello1 _tinysshd-test-hello2 _tinysshd-test-ignore _tinysshd-test-kex-protocol _tinysshd-test-kex1 _tinysshd-test-kex2 _tinysshd-test-packet _tinysshd-test-rekey-protocol _tinysshd-test-sequence _tinysshd-test-subprocess-auth _tinysshd-unauthenticated test-crypto tinysshd
+PROGRAMS=_tinysshd-printkex _tinysshd-test-auth-protocol _tinysshd-test-channel-flow _tinysshd-test-channel-protocol _tinysshd-test-global-request _tinysshd-test-hello1 _tinysshd-test-hello2 _tinysshd-test-ignore _tinysshd-test-kex-protocol _tinysshd-test-kex1 _tinysshd-test-kex2 _tinysshd-test-packet _tinysshd-test-rekey-protocol _tinysshd-test-sequence _tinysshd-test-sig _tinysshd-test-subprocess-auth _tinysshd-unauthenticated test-crypto tinysshd
 LINKS=tinysshd-makekey tinysshd-printkey
 SSHLINKS=tinysshnoneauthd
 SSHPROGRAMS=_tinysshd-test-session-id
@@ -207,6 +207,9 @@ _tinysshd-test-sequence.o: _tinysshd-test-sequence.c buf.h \
  crypto_sort_uint32.h crypto_stream_chacha20.h limit.h haslimits.h \
  channel.h iptostr.h porttostr.h ssh.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c _tinysshd-test-sequence.c
+
+_tinysshd-test-sig.o: _tinysshd-test-sig.c sig.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c _tinysshd-test-sig.c
 
 _tinysshd-test-subprocess-auth.o: _tinysshd-test-subprocess-auth.c e.h \
  getln.h log.h
@@ -1045,6 +1048,10 @@ _tinysshd-test-rekey-protocol: _tinysshd-test-rekey-protocol.o $(OBJECTS) random
 
 _tinysshd-test-sequence: _tinysshd-test-sequence.o $(OBJECTS) randombytes.o libs
 	$(CC) $(CFLAGS) $(CPPFLAGS) -o _tinysshd-test-sequence _tinysshd-test-sequence.o \
+	$(OBJECTS) $(LDFLAGS) `cat libs` randombytes.o
+
+_tinysshd-test-sig: _tinysshd-test-sig.o $(OBJECTS) randombytes.o libs
+	$(CC) $(CFLAGS) $(CPPFLAGS) -o _tinysshd-test-sig _tinysshd-test-sig.o \
 	$(OBJECTS) $(LDFLAGS) `cat libs` randombytes.o
 
 _tinysshd-test-subprocess-auth: _tinysshd-test-subprocess-auth.o $(OBJECTS) randombytes.o libs

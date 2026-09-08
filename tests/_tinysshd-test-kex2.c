@@ -6,7 +6,7 @@ Public domain.
 
 #include <sys/types.h>
 #include <unistd.h>
-#include <signal.h>
+#include "sig.h"
 #include "log.h"
 #include "packet.h"
 #include "ssh.h"
@@ -161,7 +161,7 @@ int main(int argc, char **argv) {
     close(1);
     if (dup2(tochild[1], 1) == -1) _exit(111);
 
-    signal(SIGPIPE, SIG_IGN);
+    sig_ignore(SIGPIPE);
 
     global_init();
 

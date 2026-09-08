@@ -5,6 +5,8 @@ export LANG
 LC_ALL=C
 export LC_ALL
 
+./_tinysshd-test-sig || exit 111
+
 tmpdir=$(mktemp -d "${TMPDIR-/tmp}/tinyssh-signals.XXXXXXXXXX") || exit 111
 serverpid=
 inputopen=0
