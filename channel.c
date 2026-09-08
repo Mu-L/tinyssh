@@ -10,11 +10,11 @@ The 'channel' library is used to handle data from/to SSH channel (rfc4254).
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <signal.h>
 #include <termios.h>
 #include <sys/ioctl.h>
 #include <paths.h>
 extern char *ptsname(int);
+#include "sig.h"
 #include "byte.h"
 #include "bug.h"
 #include "newenv.h"
@@ -206,7 +206,7 @@ int channel_exec(const char *cmd) {
             run[0] = ln;
             run[1] = 0;
         }
-        signal(SIGPIPE, SIG_DFL);
+        sig_uncatch(SIGPIPE);
         newenv_exec(shell, run);
         _exit(111);
     }

@@ -7,8 +7,8 @@ Public domain.
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <signal.h>
 #include <poll.h>
+#include "sig.h"
 #include "blocking.h"
 #include "ssh.h"
 #include "purge.h"
@@ -73,8 +73,8 @@ int main_tinysshd(int argc, char **argv, const char *binaryname) {
     long long binarynamelen = str_len(binaryname);
     const char *usage;
 
-    signal(SIGPIPE, SIG_IGN);
-    signal(SIGALRM, timeout);
+    sig_ignore(SIGPIPE);
+    sig_catch(SIGALRM, timeout);
 
     log_init(0, binaryname, 0, 0);
     if (str_equaln(binaryname, binarynamelen, "tinysshnoneauthd")) {
@@ -356,10 +356,11 @@ rekeying:
 
         /* check child */
         if (channel_iseof()) {
-            if (selfpipe[0] == -1)
+            if (selfpipe[0] == -1) {
                 if (open_pipe(selfpipe) == -1)
                     die_fatal("unable to open pipe", 0, 0);
-            signal(SIGCHLD, trigger);
+                sig_catch(SIGCHLD, trigger);
+            }
             if (channel_waitnohang(&exitsignal, &exitcode)) {
                 packet_channel_send_eof(&b2);
                 if (!packet_channel_send_close(&b2, exitsignal, exitcode))

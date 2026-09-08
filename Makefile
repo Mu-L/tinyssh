@@ -28,7 +28,7 @@ OBJLIB=blocking.o buf.o byte.o channel.o channel_drop.o channel_fork.o \
  packet_channel_recv.o packet_channel_request.o packet_channel_send.o \
  packet_get.o packet_global_request.o packet_hello.o packet_kex.o packet_kexdh.o \
  packet_put.o packet_recv.o packet_send.o packet_unimplemented.o packetparser.o \
- porttostr.o randommod.o readall.o savesync.o sc25519.o ssh.o sshcrypto.o \
+ porttostr.o randommod.o readall.o savesync.o sc25519.o sig.o ssh.o sshcrypto.o \
  sshcrypto_cipher.o sshcrypto_cipher_chachapoly.o sshcrypto_kex.o \
  sshcrypto_kex_curve25519.o sshcrypto_kex_sntrup761x25519.o sshcrypto_key.o \
  sshcrypto_key_ed25519.o str.o stringparser.o subprocess_auth.o \
@@ -52,7 +52,7 @@ OBJALL=_tinysshd-speed.o blocking.o buf.o byte.o channel.o channel_drop.o \
  packet_channel_request.o packet_channel_send.o packet_get.o \
  packet_global_request.o packet_hello.o packet_kex.o packet_kexdh.o packet_put.o \
  packet_recv.o packet_send.o packet_unimplemented.o packetparser.o porttostr.o \
- randombytes.o randommod.o readall.o savesync.o sc25519.o ssh.o sshcrypto.o \
+ randombytes.o randommod.o readall.o savesync.o sc25519.o sig.o ssh.o sshcrypto.o \
  sshcrypto_cipher.o sshcrypto_cipher_chachapoly.o sshcrypto_kex.o \
  sshcrypto_kex_curve25519.o sshcrypto_kex_sntrup761x25519.o sshcrypto_key.o \
  sshcrypto_key_ed25519.o str.o stringparser.o subprocess_auth.o \
@@ -68,7 +68,7 @@ AUTOHEADERS=haslib1305.h haslib25519.h haslibntruprime.h haslibrandombytes.h \
 
 all: $(AUTOHEADERS) $(BINARIES) $(LINKS)
 
-_tinysshd-speed.o: _tinysshd-speed.c crypto.h cryptoint/crypto_int16.h \
+_tinysshd-speed.o: _tinysshd-speed.c sig.h crypto.h cryptoint/crypto_int16.h \
  cryptoint/crypto_int32.h cryptoint/crypto_int64.h \
  cryptoint/crypto_int8.h cryptoint/crypto_uint16.h \
  cryptoint/crypto_uint32.h cryptoint/crypto_uint64.h \
@@ -92,7 +92,7 @@ buf.o: buf.c byte.h str.h purge.h cleanup.h randombytes.h \
 byte.o: byte.c cryptoint/crypto_int16.h byte.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c byte.c
 
-channel.o: channel.c byte.h bug.h global.h e.h log.h newenv.h purge.h \
+channel.o: channel.c sig.h byte.h bug.h global.h e.h log.h newenv.h purge.h \
  cleanup.h connectioninfo.h iptostr.h porttostr.h buf.h \
  cryptoint/crypto_uint8.h cryptoint/crypto_uint32.h str.h logsys.h \
  loginshell.h trymlock.h limit.h haslimits.h channel.h
@@ -272,7 +272,7 @@ logsys.o: logsys.c hasutilh.h hasutmpx.h hasutmpxupdwtmpx.h \
  logsys.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c logsys.c
 
-main_tinysshd.o: main_tinysshd.c blocking.h ssh.h purge.h cleanup.h \
+main_tinysshd.o: main_tinysshd.c sig.h blocking.h ssh.h purge.h cleanup.h \
  open.h load.h e.h byte.h buf.h cryptoint/crypto_uint8.h \
  cryptoint/crypto_uint32.h packet.h sshcrypto.h crypto.h \
  cryptoint/crypto_int16.h cryptoint/crypto_int32.h \
@@ -566,6 +566,9 @@ savesync.o: savesync.c open.h savesync.h writeall.h
 sc25519.o: sc25519.c cryptoint/crypto_int64.h cryptoint/crypto_uint32.h \
  cryptoint/crypto_uint64.h cleanup.h sc25519.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c sc25519.c
+
+sig.o: sig.c sig.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c sig.c
 
 ssh.o: ssh.c ssh.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c ssh.c
@@ -916,4 +919,3 @@ install: $(BINARIES) $(LINKS)
 clean:
 	$(MAKE) -C tests clean
 	rm -f *.log libs $(OBJLIB) $(OBJALL) $(BINARIES) $(LINKS) $(AUTOHEADERS)
-

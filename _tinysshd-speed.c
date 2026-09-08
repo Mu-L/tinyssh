@@ -1,6 +1,6 @@
-#include <signal.h>
 #include <stdio.h>
 #include <unistd.h>
+#include "sig.h"
 #include "crypto.h"
 
 static unsigned char sk[2560];
@@ -19,14 +19,13 @@ static const char *implementation, *version;
 static int flagtimeout;
 static void timeout(int x) {
     flagtimeout = x = 1;
-    signal(SIGALRM, timeout);
 }
 
 int main(void) {
 
     long long count;
 
-    signal(SIGALRM, timeout);
+    sig_catch(SIGALRM, timeout);
 
     /* randombytes test */
     alarm(1);
